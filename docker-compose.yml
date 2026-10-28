@@ -20,7 +20,7 @@ services:
     container_name: uiem_backend
     restart: always
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - DB_HOST=db
       - DB_USER=root
