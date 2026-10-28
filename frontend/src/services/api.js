@@ -1,7 +1,8 @@
 // frontend/src/services/api.js
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+// ✅ URL de producción apuntando a la IP del servidor y al puerto 3001
+const API_URL = import.meta.env.VITE_API_URL || 'http://172.16.100.30:3001/api';
 
 const api = axios.create({
   baseURL: API_URL,

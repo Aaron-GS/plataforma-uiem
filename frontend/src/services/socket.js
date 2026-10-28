@@ -13,7 +13,8 @@ const initSocket = () => {
         return null;
     }
 
-    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
+    // ✅ URL de producción apuntando a la IP del servidor y al puerto 3001
+    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://172.16.100.30:3001';
 
     socket = io(SOCKET_URL, {
         auth: { token },
