@@ -29,6 +29,7 @@ services:
       - DB_PORT=3306
       - JWT_SECRET=uiem_clave_secreta_2026_super_segura
       - PORT=3000
+      - FRONTEND_URL=http://172.16.100.30:8080
     depends_on:
       - db
     volumes:

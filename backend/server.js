@@ -11,11 +11,17 @@ const server = http.createServer(app);
 // =============================================
 // CONFIGURACIÓN DE MIDDLEWARES
 // =============================================
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+// ✅ Permitir conexiones desde local y desde la IP del servidor
+const corsOptions = {
+    origin: [
+        'http://localhost:5173',       // Para pruebas locales
+        'http://172.16.100.30:8080'    // Para producción en el servidor
+    ],
     credentials: true
-}));
+};
+app.use(cors(corsOptions));
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: true }));
 
 // Servir archivos estáticos (evidencias)
