@@ -184,16 +184,47 @@ const cambiarEstado = async (nuevoEstado) => {
 };
 
 const descargarEvidencia = async (evidenciaId) => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(`http://localhost:3000/api/evidencias/${evidenciaId}/descargar`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  const blob = await response.blob();
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'evidencia';
-  a.click();
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('❌ No estás autenticado');
+      return;
+    }
+
+    // ✅ Usar la URL de producción para el servidor
+    const API_URL = import.meta.env.VITE_API_URL || 'http://172.16.100.30:3001/api';
+    
+    const response = await fetch(`${API_URL}/evidencias/${evidenciaId}/descargar`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al descargar el archivo');
+    }
+
+    // Obtener el nombre real del archivo (opcional, pero recomendado)
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'evidencia';
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename="(.+)"/);
+      if (match) filename = match[1];
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error('Error al descargar:', error);
+    alert('❌ Error al descargar el archivo');
+  }
 };
 
 const volver = () => router.push('/mis-tareas');
