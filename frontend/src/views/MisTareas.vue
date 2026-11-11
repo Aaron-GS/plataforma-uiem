@@ -8,7 +8,7 @@
           Mis Tareas
         </h1>
         <p class="subtitle">
-          {{ authStore.puedeCrearTareas ? 'Tareas creadas y asignadas a tu área' : 'Tareas asignadas a tu área' }}
+          {{ authStore.isSuperAdmin ? 'Todas las tareas del sistema' : 'Tareas asignadas a tu área' }}
         </p>
       </div>
     </div>
@@ -18,7 +18,6 @@
       <span>Solo puedes ver las tareas asignadas a tu área. Para crear o asignar tareas, contacta a un administrador.</span>
     </div>
 
-    <!-- Filtros -->
     <div class="filtros-container">
       <div class="filtros-row">
         <div class="filtro-group">
@@ -52,14 +51,12 @@
       </div>
     </div>
 
-    <!-- Lista de tareas -->
     <div v-if="loading" class="loading">Cargando tareas...</div>
     <div v-else-if="tareasFiltradas.length === 0" class="empty-state">
       <p>No hay tareas que coincidan con los filtros</p>
     </div>
 
     <div v-else class="tareas-grid">
-      <!-- ✅ TARJETA CLICKEABLE -->
       <div 
         v-for="tarea in tareasFiltradas" 
         :key="tarea.id" 
@@ -72,6 +69,21 @@
         </div>
         <p class="descripcion">{{ tarea.descripcion || 'Sin descripción' }}</p>
         
+        <!-- ✅ NUEVO: Resumen de progreso por áreas -->
+        <div v-if="tarea.areas_asignadas && tarea.areas_asignadas.length > 0" class="progreso-resumen">
+          <div class="progreso-info">
+            <span>Progreso de áreas:</span>
+            <strong>{{ getAreasCompletadas(tarea) }} de {{ tarea.areas_asignadas.length }} completadas</strong>
+          </div>
+          <div class="progreso-barra">
+            <div 
+              class="progreso-fill" 
+              :style="{ width: getPorcentaje(tarea) + '%' }"
+              :class="{ 'completo': getPorcentaje(tarea) === 100 }"
+            ></div>
+          </div>
+        </div>
+
         <div class="tarea-meta">
           <span class="prioridad" :class="tarea.prioridad">
             <img src="/src/assets/icons/icon-prioridad.png" alt="" class="meta-icon" />
@@ -86,11 +98,11 @@
         <div class="tarea-footer">
           <span class="area">
             <img src="/src/assets/icons/icon-area.png" alt="" class="meta-icon-small" />
-            {{ tarea.area_destino?.nombre || 'Sin área' }}
+            {{ tarea.areas_asignadas?.length || 0 }} área(s)
           </span>
           <span class="btn-ver">
             <img src="/src/assets/icons/icon-ver.png" alt="" class="btn-icon-small" />
-            Ver tarea
+            Ver Detalle
           </span>
         </div>
       </div>
@@ -121,6 +133,19 @@ const tareasFiltradas = computed(() => {
   if (filtros.value.prioridad) resultado = resultado.filter(t => t.prioridad === filtros.value.prioridad);
   return resultado;
 });
+
+// ✅ Funciones para calcular el progreso visual
+const getAreasCompletadas = (tarea) => {
+  if (!tarea.areas_asignadas) return 0;
+  return tarea.areas_asignadas.filter(a => a.estado === 'completada').length;
+};
+
+const getPorcentaje = (tarea) => {
+  if (!tarea.areas_asignadas || tarea.areas_asignadas.length === 0) return 0;
+  const total = tarea.areas_asignadas.length;
+  const completadas = getAreasCompletadas(tarea);
+  return Math.round((completadas / total) * 100);
+};
 
 const cargarTareas = async () => {
   loading.value = true;
@@ -181,7 +206,7 @@ option.opt-media { background: #fff3e0; color: #e65100; }
 option.opt-alta { background: #ffebee; color: #b71c1c; }
 
 /* Tarjetas */
-.tareas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+.tareas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
 .tarea-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(13, 61, 42, 0.08); transition: all 0.25s; border-left: 4px solid #1a5c40; border-top: 1px solid #e0ebe5; border-right: 1px solid #e0ebe5; border-bottom: 1px solid #e0ebe5; cursor: pointer; }
 .tarea-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(13, 61, 42, 0.15); border-left-color: #2d7a55; }
 .tarea-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; }
@@ -193,6 +218,38 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .estado.completada { background: #e0ebe5; color: #0d3d2a; }
 .estado.rechazada { background: #ffebee; color: #b71c1c; }
 .descripcion { color: #666; font-size: 14px; margin: 8px 0 12px 0; line-height: 1.5; }
+
+/* ✅ Estilos del progreso */
+.progreso-resumen {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border: 1px solid #e0ebe5;
+}
+.progreso-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 4px;
+}
+.progreso-barra {
+  height: 6px;
+  background: #e0ebe5;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progreso-fill {
+  height: 100%;
+  background: #1a5c40;
+  border-radius: 3px;
+  transition: width 0.5s;
+}
+.progreso-fill.completo {
+  background: #4caf50;
+}
+
 .tarea-meta { display: flex; gap: 12px; margin-bottom: 12px; font-size: 12px; }
 .prioridad, .fecha, .area { display: inline-flex; align-items: center; }
 .prioridad { padding: 2px 8px; border-radius: 4px; font-weight: 700; }
