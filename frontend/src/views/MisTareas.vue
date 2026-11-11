@@ -18,6 +18,7 @@
       <span>Solo puedes ver las tareas asignadas a tu área. Para crear o asignar tareas, contacta a un administrador.</span>
     </div>
 
+    <!-- Filtros -->
     <div class="filtros-container">
       <div class="filtros-row">
         <div class="filtro-group">
@@ -51,6 +52,7 @@
       </div>
     </div>
 
+    <!-- Lista de tareas -->
     <div v-if="loading" class="loading">Cargando tareas...</div>
     <div v-else-if="tareasFiltradas.length === 0" class="empty-state">
       <p>No hay tareas que coincidan con los filtros</p>
@@ -69,8 +71,11 @@
         </div>
         <p class="descripcion">{{ tarea.descripcion || 'Sin descripción' }}</p>
         
-        <!-- ✅ NUEVO: Resumen de progreso por áreas -->
-        <div v-if="tarea.areas_asignadas && tarea.areas_asignadas.length > 0" class="progreso-resumen">
+        <!-- ✅ BARRA DE PROGRESO (Solo visible para Superadmins) -->
+        <div 
+          v-if="authStore.isSuperAdmin && tarea.areas_asignadas && tarea.areas_asignadas.length > 0" 
+          class="progreso-resumen"
+        >
           <div class="progreso-info">
             <span>Progreso de áreas:</span>
             <strong>{{ getAreasCompletadas(tarea) }} de {{ tarea.areas_asignadas.length }} completadas</strong>
@@ -134,12 +139,14 @@ const tareasFiltradas = computed(() => {
   return resultado;
 });
 
-// ✅ Funciones para calcular el progreso visual
+// ✅ Función corregida para calcular las áreas completadas
 const getAreasCompletadas = (tarea) => {
-  if (!tarea.areas_asignadas) return 0;
+  if (!tarea.areas_asignadas || tarea.areas_asignadas.length === 0) return 0;
+  // Cuenta cuántas áreas tienen estado 'completada' en la tabla intermedia
   return tarea.areas_asignadas.filter(a => a.estado === 'completada').length;
 };
 
+// ✅ Función para calcular el porcentaje
 const getPorcentaje = (tarea) => {
   if (!tarea.areas_asignadas || tarea.areas_asignadas.length === 0) return 0;
   const total = tarea.areas_asignadas.length;
@@ -179,9 +186,9 @@ onMounted(() => cargarTareas());
 .filtros-container { background: white; padding: 16px 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(13, 61, 42, 0.08); margin-bottom: 24px; border: 1px solid #e0ebe5; }
 .filtros-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .filtro-group { flex: 1; min-width: 150px; }
-.input-busqueda { width: 100%; padding: 8px 14px 8px 38px; border: 2px solid #e0ebe5; border-radius: 6px; font-size: 14px; background-image: url('/src/assets/icons/icon-buscar.png'); background-repeat: no-repeat; background-position: 12px center; background-size: 16px; }
+.input-busqueda { width: 100%; padding: 8px 14px 8px 38px; border: 2px solid #e0ebe5; border-radius: 6px; font-size: 14px; background-image: url('/src/assets/icons/icon-buscar.png'); background-repeat: no-repeat; background-position: 12px center; background-size: 16px; box-sizing: border-box; }
 .input-busqueda:focus { outline: none; border-color: #1a5c40; }
-.select-filtro { width: 100%; padding: 8px 14px; border: 2px solid #e0ebe5; border-radius: 6px; font-size: 14px; background: white; font-weight: 600; }
+.select-filtro { width: 100%; padding: 8px 14px; border: 2px solid #e0ebe5; border-radius: 6px; font-size: 14px; background: white; font-weight: 600; box-sizing: border-box;}
 .btn-limpiar { display: inline-flex; align-items: center; gap: 4px; padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #666; font-weight: 600; }
 .btn-limpiar:hover { background: #e0ebe5; color: #0d3d2a; }
 .btn-icon-small { width: 14px; height: 14px; }
@@ -219,36 +226,12 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .estado.rechazada { background: #ffebee; color: #b71c1c; }
 .descripcion { color: #666; font-size: 14px; margin: 8px 0 12px 0; line-height: 1.5; }
 
-/* ✅ Estilos del progreso */
-.progreso-resumen {
-  background: #f8f9fa;
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin-bottom: 12px;
-  border: 1px solid #e0ebe5;
-}
-.progreso-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #555;
-  margin-bottom: 4px;
-}
-.progreso-barra {
-  height: 6px;
-  background: #e0ebe5;
-  border-radius: 3px;
-  overflow: hidden;
-}
-.progreso-fill {
-  height: 100%;
-  background: #1a5c40;
-  border-radius: 3px;
-  transition: width 0.5s;
-}
-.progreso-fill.completo {
-  background: #4caf50;
-}
+/* ✅ Barra de progreso */
+.progreso-resumen { background: #f8f9fa; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; border: 1px solid #e0ebe5; }
+.progreso-info { display: flex; justify-content: space-between; font-size: 12px; color: #555; margin-bottom: 4px; }
+.progreso-barra { height: 6px; background: #e0ebe5; border-radius: 3px; overflow: hidden; }
+.progreso-fill { height: 100%; background: #1a5c40; border-radius: 3px; transition: width 0.5s; }
+.progreso-fill.completo { background: #4caf50; }
 
 .tarea-meta { display: flex; gap: 12px; margin-bottom: 12px; font-size: 12px; }
 .prioridad, .fecha, .area { display: inline-flex; align-items: center; }
