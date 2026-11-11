@@ -36,7 +36,6 @@ export const useAuthStore = defineStore('auth', {
     const labels = {
         'superadmin': 'Administrador',
         'admin_area': 'Admin Área',
-        'encargado': 'Encargado',
         'gestor': 'Gestor',
         'ejecutor': 'Ejecutor',
         'invitado': 'Invitado'
