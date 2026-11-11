@@ -51,6 +51,7 @@
         <div class="areas-section">
           <div class="areas-header">
             <h3>
+              <!-- ✅ El ícono ahora tiene tamaño controlado desde el CSS -->
               <img src="/src/assets/icons/icon-area.png" alt="" class="section-icon-white" />
               Áreas Destino ({{ areasSeleccionadas.length }} seleccionadas)
             </h3>
@@ -254,13 +255,24 @@ h1 { color: #0d3d2a; font-size: 28px; font-weight: 800; display: flex; align-ite
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .field.full-width { grid-column: 1 / -1; }
 .field label { display: block; font-weight: 700; margin-bottom: 4px; font-size: 13px; color: #0d3d2a; }
-.field input, .field select, .field textarea { width: 100%; padding: 10px 14px; border: 2px solid #e0ebe5; border-radius: 6px; font-size: 14px; font-family: inherit; transition: all 0.2s; background: #f5faf7; }
+.field input, .field select, .field textarea { width: 100%; padding: 10px 14px; border: 2px solid #e0ebe5; border-radius: 6px; font-size: 14px; font-family: inherit; transition: all 0.2s; background: #f5faf7; box-sizing: border-box; }
 .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #1a5c40; background: white; box-shadow: 0 0 0 3px rgba(26, 92, 64, 0.1); }
 
-/* Áreas */
+/* =========================================
+   SELECTOR DE ÁREAS
+   ========================================= */
 .areas-section { margin-top: 24px; border: 2px solid #e0ebe5; border-radius: 10px; overflow: hidden; background: #f5faf7; }
-.areas-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: linear-gradient(135deg, #0d3d2a 0%, #1a5c40 100%); color: white; }
-.areas-header h3 { font-size: 14px; margin: 0; color: white; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.areas-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: linear-gradient(135deg, #0d3d2a 0%, #1a5c40 100%); color: white; }
+.areas-header h3 { font-size: 14px; margin: 0; color: white; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+
+/* ✅ ARREGLO DEL ICONO GIGANTE */
+.section-icon-white {
+  width: 18px !important;
+  height: 18px !important;
+  object-fit: contain;
+  filter: brightness(0) invert(1); /* Lo hace blanco */
+}
+
 .areas-actions { display: flex; gap: 8px; }
 .btn-mini { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; color: white; font-weight: 600; transition: all 0.2s; }
 .btn-mini:hover { background: rgba(255, 255, 255, 0.3); }
@@ -278,7 +290,7 @@ h1 { color: #0d3d2a; font-size: 28px; font-weight: 800; display: flex; align-ite
 .area-nombre { font-weight: 600; color: #333; }
 
 /* Botón para asignar usuario */
-.btn-expand { background: none; border: 1px solid #e0ebe5; padding: 4px 10px; border-radius: 20px; font-size: 11px; color: #1a5c40; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.btn-expand { background: none; border: 1px solid #e0ebe5; padding: 4px 10px; border-radius: 20px; font-size: 11px; color: #1a5c40; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .btn-expand:hover { background: #e0ebe5; }
 
 /* Panel de usuario */
@@ -290,7 +302,7 @@ h1 { color: #0d3d2a; font-size: 28px; font-weight: 800; display: flex; align-ite
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-icon { width: 18px; height: 18px; object-fit: contain; filter: brightness(0) invert(1); }
 
-/* Modal de acceso denegado */
+/* Acceso denegado */
 .acceso-denegado { display: flex; justify-content: center; align-items: center; min-height: 60vh; }
 .denegado-card { background: white; padding: 48px; border-radius: 16px; box-shadow: 0 8px 30px rgba(13, 61, 42, 0.15); text-align: center; max-width: 500px; border-top: 4px solid #1a5c40; }
 .denegado-card .icono { font-size: 64px; display: block; margin-bottom: 16px; }
