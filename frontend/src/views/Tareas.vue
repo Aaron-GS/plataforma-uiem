@@ -279,7 +279,23 @@ h1 { color: #0d3d2a; font-size: 28px; font-weight: 800; display: flex; align-ite
 
 .areas-lista { padding: 12px; max-height: 400px; overflow-y: auto; }
 .categoria-grupo { margin-bottom: 16px; }
-.categoria-titulo { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #0d3d2a; margin-bottom: 8px; padding-left: 4px; }
+/* Formato más elegante para las categorías */
+.categoria-titulo {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1a5c40;
+  margin-bottom: 12px;
+  margin-top: 16px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e0ebe5;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Quitar el margen superior al primer grupo para que no quede espacio extra */
+.categoria-grupo:first-child .categoria-titulo {
+  margin-top: 0;
+}
 .categoria-areas { display: flex; flex-direction: column; gap: 6px; }
 
 .area-item { padding: 8px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.2s; background: white; }
