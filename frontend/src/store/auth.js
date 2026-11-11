@@ -17,10 +17,9 @@ export const useAuthStore = defineStore('auth', {
         isAdminArea: (state) => state.usuario?.rol === 'admin_area',
         
         puedeCrearTareas: (state) => {
-    if (!state.usuario) return false;
-    const rolesPermitidos = ['superadmin', 'admin_area', 'encargado'];
-    return rolesPermitidos.includes(state.usuario.rol);
-         },
+            if (!state.usuario) return false;
+            return state.usuario.rol === 'superadmin'; // ✅ Solo el rol superadmin
+        },
         
         esEjecutor: (state) => {
             if (!state.usuario) return false;

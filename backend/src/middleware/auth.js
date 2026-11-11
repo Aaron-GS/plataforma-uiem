@@ -92,7 +92,7 @@ const verificarAdministrador = (req, res, next) => {
         });
     }
 
-    const rolesPermitidos = ['superadmin', 'admin_area'];
+    const rolesPermitidos = ['superadmin'];
     
     if (!rolesPermitidos.includes(req.usuario.rol)) {
         return res.status(403).json({
