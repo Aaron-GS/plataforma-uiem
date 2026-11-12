@@ -251,6 +251,14 @@ exports.actualizarTarea = async (req, res) => {
         if (estado === 'completada') tarea.fecha_completada = new Date();
         await tarea.save();
 
+        // ✅ Si el admin aprueba la tarea, marcamos TODAS las áreas como completadas
+        if (estado === 'completada') {
+        await TareaArea.update(
+        { estado: 'completada' },
+        { where: { tarea_id: tarea.id } }
+        );
+        }
+
         await HistorialTarea.create({
             tarea_id: tarea.id,
             usuario_id: usuario.id,
