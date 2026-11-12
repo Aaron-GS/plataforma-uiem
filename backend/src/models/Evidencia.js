@@ -16,6 +16,10 @@ const Evidencia = sequelize.define('Evidencia', {
         type: DataTypes.INTEGER,
         allowNull: false
     },
+    area_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
     nombre_archivo: {
         type: DataTypes.STRING(255),
         allowNull: false
@@ -25,7 +29,7 @@ const Evidencia = sequelize.define('Evidencia', {
         allowNull: false
     },
     tipo_archivo: {
-        type: DataTypes.STRING(50)
+        type: DataTypes.STRING(100)
     },
     tamaño: {
         type: DataTypes.INTEGER
