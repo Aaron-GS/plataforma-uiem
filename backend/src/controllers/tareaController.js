@@ -232,6 +232,9 @@ exports.obtenerTareaPorId = async (req, res) => {
 // =============================================
 // ACTUALIZAR TAREA (Con notificación de validación)
 // =============================================
+// =============================================
+// ACTUALIZAR TAREA (Lógica de validación general)
+// =============================================
 exports.actualizarTarea = async (req, res) => {
     try {
         const { id } = req.params;
@@ -248,17 +251,11 @@ exports.actualizarTarea = async (req, res) => {
         if (fecha_limite) tarea.fecha_limite = fecha_limite;
         if (descripcion) tarea.descripcion = descripcion;
 
+        // Si el estado general cambia a completada, actualizamos la fecha
         if (estado === 'completada') tarea.fecha_completada = new Date();
         await tarea.save();
 
-        // ✅ Si el admin aprueba la tarea, marcamos TODAS las áreas como completadas
-        if (estado === 'completada') {
-        await TareaArea.update(
-        { estado: 'completada' },
-        { where: { tarea_id: tarea.id } }
-        );
-        }
-
+        // Historial
         await HistorialTarea.create({
             tarea_id: tarea.id,
             usuario_id: usuario.id,
@@ -267,7 +264,7 @@ exports.actualizarTarea = async (req, res) => {
             datos_previos: datosPrevios
         });
 
-        // 🔔 NOTIFICACIÓN: Si un gestor cambia a "por_validar", avisar al creador (Admin)
+        // 🔔 NOTIFICACIÓN: Si pasa a "por_validar", avisar al creador
         if (estado === 'por_validar') {
             await Notificacion.create({
                 usuario_id: tarea.creada_por,
@@ -337,18 +334,52 @@ exports.reasignarTarea = async (req, res) => {
 // =============================================
 // ACTUALIZAR ESTADO DE UN ÁREA ESPECÍFICA
 // =============================================
+// =============================================
+// ACTUALIZAR ESTADO DE UN ÁREA ESPECÍFICA
+// =============================================
 exports.actualizarEstadoArea = async (req, res) => {
     try {
         const { tareaId, areaId } = req.params;
-        const { estado, asignada_a, fecha_limite } = req.body;
+        const { estado } = req.body;
         
         const tareaArea = await TareaArea.findOne({ where: { tarea_id: tareaId, area_id: areaId } });
         if (!tareaArea) return res.status(404).json({ success: false, message: 'No encontrado' });
 
         if (estado) tareaArea.estado = estado;
-        if (asignada_a !== undefined) tareaArea.asignada_a = asignada_a;
-        if (fecha_limite !== undefined) tareaArea.fecha_limite = fecha_limite;
         await tareaArea.save();
+
+        // ✅ LÓGICA DE NEGOCIO: 
+        // Revisar si TODAS las áreas de esta tarea ya están "completadas"
+        const todasLasAreas = await TareaArea.findAll({ where: { tarea_id: tareaId } });
+        const totalAreas = todasLasAreas.length;
+        const areasCompletadas = todasLasAreas.filter(a => a.estado === 'completada').length;
+
+        // Si todas las áreas están completadas, actualizamos la tarea principal
+        if (totalAreas > 0 && areasCompletadas === totalAreas) {
+            const tareaGeneral = await Tarea.findByPk(tareaId);
+            if (tareaGeneral && tareaGeneral.estado !== 'completada') {
+                tareaGeneral.estado = 'completada';
+                tareaGeneral.fecha_completada = new Date();
+                await tareaGeneral.save();
+                
+                // Registrar en historial que se completó sola porque todas las áreas terminaron
+                await HistorialTarea.create({
+                    tarea_id: tareaId,
+                    usuario_id: req.usuario.id,
+                    accion: 'completada',
+                    descripcion: `Todas las áreas han completado la tarea. Estado general actualizado a COMPLETADA.`
+                });
+            }
+        } else {
+            // Si aún faltan áreas, la tarea general se queda "En Proceso" o "Por Validar" 
+            // (dependiendo de cómo quieras manejarlo, aquí la regresamos a 'en_proceso' si estaba completada)
+            const tareaGeneral = await Tarea.findByPk(tareaId);
+            if (tareaGeneral && tareaGeneral.estado === 'completada') {
+                tareaGeneral.estado = 'en_proceso';
+                tareaGeneral.fecha_completada = null;
+                await tareaGeneral.save();
+            }
+        }
 
         res.json({ success: true, data: tareaArea });
     } catch (error) {
