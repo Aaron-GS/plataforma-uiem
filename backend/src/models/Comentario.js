@@ -3,23 +3,11 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 const Comentario = sequelize.define('Comentario', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    },
-    tarea_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-    },
-    usuario_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-    },
-    contenido: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    }
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tarea_id: { type: DataTypes.INTEGER, allowNull: false },
+    usuario_id: { type: DataTypes.INTEGER, allowNull: false },
+    area_id: { type: DataTypes.INTEGER, allowNull: true }, // ✅ NUEVO
+    contenido: { type: DataTypes.TEXT, allowNull: false }
 }, {
     tableName: 'comentarios',
     timestamps: true,

@@ -74,10 +74,9 @@
                 </div>
               </div>
 
-              <!-- ✅ 1. EVIDENCIAS DEL ÁREA -->
+              <!-- EVIDENCIAS DEL ÁREA -->
               <div class="area-evidencias">
                 <h5>📎 Evidencias de esta área</h5>
-                
                 <div v-if="!getEvidenciasArea(ta.area_id).length" class="sin-evidencias-area">No hay evidencias para esta área.</div>
                 <div v-else class="evidencias-lista-area">
                   <div v-for="ev in getEvidenciasArea(ta.area_id)" :key="ev.id" class="evidencia-item-mini">
@@ -85,69 +84,37 @@
                     <button @click="descargarEvidencia(ev.id)" class="btn-descargar-mini">⬇</button>
                   </div>
                 </div>
-                
-                <!-- Subir evidencia (solo visible si el área está EN PROCESO y no está completada) -->
                 <div v-if="ta.estado === 'en_proceso'">
                   <SubirEvidencia :tareaId="tarea.id" :areaId="ta.area_id" @archivo-subido="cargarEvidencias" />
                 </div>
               </div>
 
-              <!-- ✅ 2. BOTONES DE ACCIÓN (Flujo estricto) -->
+              <!-- BOTONES DE ACCIÓN POR ÁREA -->
               <div class="area-detalle-acciones">
-                
-                <!-- VISTA PARA EL GESTOR (No Admin) -->
                 <template v-if="!esAdmin">
-                  <button 
-                    v-if="ta.estado === 'pendiente'" 
-                    @click="cambiarEstadoArea(ta.area_id, 'en_proceso')" 
-                    class="btn-estado primary"
-                  >
-                    ▶ Iniciar Tarea
-                  </button>
-
-                  <button 
-                    v-if="ta.estado === 'en_proceso'" 
-                    @click="cambiarEstadoArea(ta.area_id, 'por_validar')" 
-                    class="btn-estado warning"
-                    :disabled="getEvidenciasArea(ta.area_id).length === 0"
-                    :title="getEvidenciasArea(ta.area_id).length === 0 ? 'Debes subir al menos una evidencia para enviar a validación' : ''"
-                  >
-                    📤 Enviar a Validación
-                  </button>
-
-                  <div v-if="ta.estado === 'por_validar'" class="status-info">
-                    ⏳ Esperando validación del administrador.
-                  </div>
-                  <div v-if="ta.estado === 'completada'" class="status-completed">
-                    ✔ Tarea completada y validada.
-                  </div>
+                  <button v-if="ta.estado === 'pendiente'" @click="cambiarEstadoArea(ta.area_id, 'en_proceso')" class="btn-estado primary">▶ Iniciar Tarea</button>
+                  <button v-if="ta.estado === 'en_proceso'" @click="cambiarEstadoArea(ta.area_id, 'por_validar')" class="btn-estado warning" :disabled="getEvidenciasArea(ta.area_id).length === 0">📤 Enviar a Validación</button>
+                  <div v-if="ta.estado === 'por_validar'" class="status-info">⏳ Esperando validación del administrador.</div>
+                  <div v-if="ta.estado === 'completada'" class="status-completed">✔ Tarea completada y validada.</div>
                 </template>
 
-                <!-- VISTA PARA EL ADMINISTRADOR -->
                 <template v-else>
                   <div v-if="ta.estado === 'por_validar'" class="admin-actions">
-                    <button @click="cambiarEstadoArea(ta.area_id, 'completada')" class="btn-estado success">
-                      ✔ Validar y Completar Área
-                    </button>
-                    <button @click="cambiarEstadoArea(ta.area_id, 'en_proceso')" class="btn-estado danger">
-                      ✖ Rechazar (Regresar a Proceso)
-                    </button>
+                    <button @click="cambiarEstadoArea(ta.area_id, 'completada')" class="btn-estado success">✔ Validar y Completar Área</button>
+                    <button @click="cambiarEstadoArea(ta.area_id, 'en_proceso')" class="btn-estado danger">✖ Rechazar (Regresar a Proceso)</button>
                   </div>
-                  <div v-else-if="ta.estado === 'completada'" class="status-completed">
-                    ✔ Área completada y validada.
-                  </div>
-                  <div v-else class="status-info">
-                    En espera de que el gestor complete el proceso.
-                  </div>
+                  <div v-else-if="ta.estado === 'completada'" class="status-completed">✔ Área completada y validada.</div>
+                  <div v-else class="status-info">En espera de que el gestor complete el proceso.</div>
                 </template>
-
               </div>
+
+              <!-- ✅ COMENTARIOS ESPECÍFICOS DEL ÁREA -->
+              <Comentarios :tareaId="tarea.id" :areaId="ta.area_id" />
+
             </div>
           </div>
         </div>
 
-        <!-- COMENTARIOS -->
-        <Comentarios :tareaId="tarea.id" />
       </div>
     </div>
   </div>
@@ -279,7 +246,7 @@ onMounted(() => {
 
 .areas-panel { margin-bottom: 24px; }
 .areas-lista-detalle { display: flex; flex-direction: column; gap: 10px; }
-.area-detalle-card { background: white; border: 1px solid #e0ebe5; border-radius: 8px; padding: 12px 16px; }
+.area-detalle-card { background: white; border: 1px solid #e0ebe5; border-radius: 8px; padding: 12px 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
 .area-detalle-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px dashed #e0ebe5; padding-bottom: 8px;}
 .area-nombre { font-size: 14px; font-weight: 800; color: #0d3d2a; display: block;}
 .area-categoria { font-size: 10px; color: #888; text-transform: uppercase; font-weight: 700; }
