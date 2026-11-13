@@ -2,9 +2,9 @@
 <template>
   <div id="app">
     <nav 
-  v-if="authStore.isAuthenticated && authStore.inicializado && $route.path !== '/login'" 
-  class="navbar"
->
+      v-if="authStore.isAuthenticated && authStore.inicializado && $route.path !== '/login'" 
+      class="navbar"
+    >
       <div class="nav-container">
         
         <!-- ============================================ -->
@@ -32,15 +32,7 @@
             <span>Mis Tareas</span>
           </router-link>
           
-          <router-link 
-            v-if="authStore.puedeCrearTareas" 
-            to="/tareas" 
-            class="nav-link" 
-            @click="menuAbierto = false"
-          >
-            <img src="/src/assets/icons/icon-crear.png" alt="" class="nav-icon" />
-            <span>Crear Tarea</span>
-          </router-link>
+          <!-- ✅ EL ENLACE DE CREAR TAREA HA SIDO ELIMINADO DE AQUÍ -->
           
           <router-link 
             v-if="authStore.isSuperAdmin" 
@@ -52,16 +44,16 @@
             <span>Dashboard</span>
           </router-link>
           
-         <!-- ✅ Calendario SOLO para Antolín (superadmin de RECTORÍA) -->
-<router-link 
-  v-if="authStore.isSuperAdmin && authStore.usuario?.email === 'antolin.celote@uiem.edu.mx'" 
-  to="/calendario" 
-  class="nav-link" 
-  @click="menuAbierto = false"
->
-  <img src="/src/assets/icons/icon-fecha.png" alt="" class="nav-icon" />
-  <span>Mi Calendario</span>
-</router-link>
+          <!-- ✅ Calendario SOLO para Antolín (superadmin de RECTORÍA) -->
+          <router-link 
+            v-if="authStore.isSuperAdmin && authStore.usuario?.email === 'antolin.celote@uiem.edu.mx'" 
+            to="/calendario" 
+            class="nav-link" 
+            @click="menuAbierto = false"
+          >
+            <img src="/src/assets/icons/icon-fecha.png" alt="" class="nav-icon" />
+            <span>Mi Calendario</span>
+          </router-link>
 
           
           <div class="nav-divider"></div>
@@ -77,9 +69,10 @@
               </span>
             </div>
           </div>
+          
           <button @click="cerrarSesion" class="btn-logout" title="Cerrar sesión">
-          <img src="/src/assets/icons/icon-logout.png" alt="Salir" class="logout-icon" />
-           <span class="logout-text">Cerrar Sesión</span>
+            <img src="/src/assets/icons/icon-logout.png" alt="Salir" class="logout-icon" />
+            <span class="logout-text">Cerrar Sesión</span>
           </button>
         </div>
       </div>
@@ -291,7 +284,7 @@ html, body, #app {
   width: 20px;
   height: 20px;
   object-fit: contain;
-  /* ✅ Hacer iconos blancos */
+  /* ✅ Los iconos mantienen su color original */
   filter: none;
   opacity: 0.9;
   transition: opacity 0.2s;
@@ -366,8 +359,6 @@ html, body, #app {
   width: fit-content;
 }
 
-
-
 .user-rol.superadmin {
   background: rgba(255, 107, 107, 0.9);
   color: white;
@@ -426,7 +417,8 @@ html, body, #app {
   width: 20px;
   height: 20px;
   object-fit: contain;
-  
+  /* ✅ Filtro para hacer el icono de logout blanco */
+  filter: brightness(0) invert(1);
 }
 
 /* ============================================
