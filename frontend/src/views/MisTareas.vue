@@ -1,9 +1,7 @@
 <!-- frontend/src/views/MisTareas.vue -->
 <template>
   <div class="page-container">
-    <!-- ============================================ -->
-    <!-- HEADER CON BOTÓN DE CREAR TAREA (Como en Dashboard) -->
-    <!-- ============================================ -->
+    <!-- HEADER CON BOTÓN DE CREAR TAREA -->
     <div class="header">
       <div class="header-title">
         <h1>
@@ -15,7 +13,6 @@
         </p>
       </div>
 
-      <!-- ✅ BOTÓN DE CREAR TAREA (Estilo igual al de Actualizar) -->
       <button 
         v-if="authStore.puedeCrearTareas" 
         @click="irACrearTarea" 
@@ -102,12 +99,16 @@
           </div>
         </div>
 
+        <!-- ✅ AQUÍ AGREGAMOS LAS ETIQUETAS DE PRIORIDAD Y FECHA -->
         <div class="tarea-meta">
+          <span class="meta-label">Prioridad:</span>
           <span class="prioridad" :class="tarea.prioridad">
             <img src="/src/assets/icons/icon-prioridad.png" alt="" class="meta-icon" />
             {{ tarea.prioridad.toUpperCase() }}
           </span>
-          <span class="fecha" v-if="tarea.fecha_limite">
+          
+          <span v-if="tarea.fecha_limite" class="meta-label" style="margin-left: 8px;">Fecha Límite:</span>
+          <span v-if="tarea.fecha_limite" class="fecha">
             <img src="/src/assets/icons/icon-fecha.png" alt="" class="meta-icon" />
             {{ formatDate(tarea.fecha_limite) }}
           </span>
@@ -189,65 +190,15 @@ onMounted(() => cargarTareas());
 <style scoped>
 .page-container { max-width: 1300px; margin: 0 auto; }
 
-/* ============================================
-   HEADER CON FLEXBOX PARA EL BOTÓN
-   ============================================ */
-.header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  margin-bottom: 24px; 
-  padding-bottom: 16px; 
-  border-bottom: 3px solid #1a5c40; 
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.header-title h1 { 
-  font-size: 28px; 
-  color: #0d3d2a; 
-  font-weight: 800; 
-  display: flex; 
-  align-items: center; 
-  gap: 10px; 
-  margin: 0; 
-}
-
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 3px solid #1a5c40; gap: 16px; flex-wrap: wrap; }
+.header-title h1 { font-size: 28px; color: #0d3d2a; font-weight: 800; display: flex; align-items: center; gap: 10px; margin: 0; }
 .title-icon { width: 32px; height: 32px; object-fit: contain; }
 .subtitle { color: #666; font-size: 14px; margin-top: 4px; }
 
-/* ✅ ESTILO DEL BOTÓN (Igual al de Actualizar del Dashboard) */
-.btn-crear-tarea {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 28px;
-  background: linear-gradient(135deg, #0d3d2a 0%, #1a5c40 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.25s;
-  box-shadow: 0 4px 12px rgba(13, 61, 42, 0.3);
-}
+.btn-crear-tarea { display: inline-flex; align-items: center; gap: 10px; padding: 14px 28px; background: linear-gradient(135deg, #0d3d2a 0%, #1a5c40 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 800; cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 12px rgba(13, 61, 42, 0.3); }
+.btn-crear-tarea:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(13, 61, 42, 0.4); }
+.btn-icon { width: 22px; height: 22px; object-fit: contain; filter: none; }
 
-.btn-crear-tarea:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(13, 61, 42, 0.4);
-}
-
-.btn-icon {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-  filter: none;
-}
-
-/* ============================================
-   RESTO DE ESTILOS
-   ============================================ */
 .info-banner { display: flex; gap: 10px; background: #e0ebe5; color: #0d3d2a; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; border-left: 4px solid #1a5c40; }
 
 .filtros-container { background: white; padding: 16px 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(13, 61, 42, 0.08); margin-bottom: 24px; border: 1px solid #e0ebe5; }
@@ -261,7 +212,6 @@ onMounted(() => cargarTareas());
 .btn-icon-small { width: 14px; height: 14px; }
 .resultados-info { margin-top: 10px; font-size: 13px; color: #888; }
 
-/* Colores de filtros */
 .select-filtro.estado-pendiente { color: #e65100; border-color: #ff9800; }
 .select-filtro.estado-en_proceso { color: #0d47a1; border-color: #2196f3; }
 .select-filtro.estado-por_validar { color: #6a1b9a; border-color: #9c27b0; }
@@ -298,13 +248,15 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .progreso-fill { height: 100%; background: #1a5c40; border-radius: 3px; transition: width 0.5s; }
 .progreso-fill.completo { background: #4caf50; }
 
-.tarea-meta { display: flex; gap: 12px; margin-bottom: 12px; font-size: 12px; }
+/* ✅ ESTILOS PARA LAS ETIQUETAS DE TEXTO */
+.tarea-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; font-size: 12px; }
+.meta-label { font-weight: 700; color: #666; text-transform: uppercase; font-size: 11px; }
 .prioridad, .fecha, .area { display: inline-flex; align-items: center; }
 .prioridad { padding: 2px 8px; border-radius: 4px; font-weight: 700; }
 .prioridad.baja { background: #e0ebe5; color: #0d3d2a; }
 .prioridad.media { background: #fff3e0; color: #e65100; }
 .prioridad.alta { background: #ffebee; color: #b71c1c; }
-.fecha { color: #888; }
+.fecha { color: #888; font-weight: 600; }
 .meta-icon { width: 14px; height: 14px; margin-right: 4px; }
 .meta-icon-small { width: 12px; height: 12px; margin-right: 4px; opacity: 0.7; }
 .tarea-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #e0ebe5; }
