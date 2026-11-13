@@ -1,8 +1,11 @@
 <!-- frontend/src/views/MisTareas.vue -->
 <template>
   <div class="page-container">
+    <!-- ============================================ -->
+    <!-- HEADER CON BOTÓN DE CREAR TAREA (Como en Dashboard) -->
+    <!-- ============================================ -->
     <div class="header">
-      <div>
+      <div class="header-title">
         <h1>
           <img src="/src/assets/icons/icon-tareas.png" alt="" class="title-icon" />
           Mis Tareas
@@ -11,6 +14,16 @@
           {{ authStore.isSuperAdmin ? 'Todas las tareas del sistema' : 'Tareas asignadas a tu área' }}
         </p>
       </div>
+
+      <!-- ✅ BOTÓN DE CREAR TAREA (Estilo igual al de Actualizar) -->
+      <button 
+        v-if="authStore.puedeCrearTareas" 
+        @click="irACrearTarea" 
+        class="btn-crear-tarea"
+      >
+        <img src="/src/assets/icons/icon-crear.png" alt="" class="btn-icon" />
+        Crear Tarea
+      </button>
     </div>
 
     <div v-if="authStore.esEjecutor" class="info-banner">
@@ -113,17 +126,6 @@
       </div>
     </div>
 
-    <!-- ✅ BOTÓN FLOTANTE (Solo visible para administradores) -->
-    <button 
-      v-if="authStore.puedeCrearTareas" 
-      @click="irACrearTarea" 
-      class="fab-crear-tarea"
-      title="Crear Nueva Tarea"
-    >
-      <img src="/src/assets/icons/icon-crear.png" alt="" class="fab-icon" />
-      <span>Crear Tarea</span>
-    </button>
-
   </div>
 </template>
 
@@ -185,27 +187,69 @@ onMounted(() => cargarTareas());
 </script>
 
 <style scoped>
+.page-container { max-width: 1300px; margin: 0 auto; }
+
 /* ============================================
-   CONTENEDOR PRINCIPAL
+   HEADER CON FLEXBOX PARA EL BOTÓN
    ============================================ */
-.page-container { 
-  max-width: 1300px; 
-  margin: 0 auto; 
-  padding-bottom: 80px; /* Espacio para el botón flotante */
+.header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 24px; 
+  padding-bottom: 16px; 
+  border-bottom: 3px solid #1a5c40; 
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.header-title h1 { 
+  font-size: 28px; 
+  color: #0d3d2a; 
+  font-weight: 800; 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  margin: 0; 
+}
+
+.title-icon { width: 32px; height: 32px; object-fit: contain; }
+.subtitle { color: #666; font-size: 14px; margin-top: 4px; }
+
+/* ✅ ESTILO DEL BOTÓN (Igual al de Actualizar del Dashboard) */
+.btn-crear-tarea {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #0d3d2a 0%, #1a5c40 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 4px 12px rgba(13, 61, 42, 0.3);
+}
+
+.btn-crear-tarea:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(13, 61, 42, 0.4);
+}
+
+.btn-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
 /* ============================================
-   HEADER
+   RESTO DE ESTILOS
    ============================================ */
-.header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 3px solid #1a5c40; }
-.header h1 { font-size: 28px; color: #0d3d2a; font-weight: 800; display: flex; align-items: center; gap: 10px; margin: 0; }
-.title-icon { width: 32px; height: 32px; object-fit: contain; }
-.subtitle { color: #666; font-size: 14px; margin-top: 4px; }
 .info-banner { display: flex; gap: 10px; background: #e0ebe5; color: #0d3d2a; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; border-left: 4px solid #1a5c40; }
 
-/* ============================================
-   FILTROS
-   ============================================ */
 .filtros-container { background: white; padding: 16px 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(13, 61, 42, 0.08); margin-bottom: 24px; border: 1px solid #e0ebe5; }
 .filtros-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .filtro-group { flex: 1; min-width: 150px; }
@@ -235,9 +279,6 @@ option.opt-baja { background: #e8f5e9; color: #1b5e20; }
 option.opt-media { background: #fff3e0; color: #e65100; }
 option.opt-alta { background: #ffebee; color: #b71c1c; }
 
-/* ============================================
-   TARJETAS DE TAREAS
-   ============================================ */
 .tareas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
 .tarea-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(13, 61, 42, 0.08); transition: all 0.25s; border-left: 4px solid #1a5c40; border-top: 1px solid #e0ebe5; border-right: 1px solid #e0ebe5; border-bottom: 1px solid #e0ebe5; cursor: pointer; }
 .tarea-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(13, 61, 42, 0.15); border-left-color: #2d7a55; }
@@ -251,7 +292,6 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .estado.rechazada { background: #ffebee; color: #b71c1c; }
 .descripcion { color: #666; font-size: 14px; margin: 8px 0 12px 0; line-height: 1.5; }
 
-/* Barra de progreso */
 .progreso-resumen { background: #f8f9fa; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; border: 1px solid #e0ebe5; }
 .progreso-info { display: flex; justify-content: space-between; font-size: 12px; color: #555; margin-bottom: 4px; }
 .progreso-barra { height: 6px; background: #e0ebe5; border-radius: 3px; overflow: hidden; }
@@ -272,44 +312,4 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .btn-ver { display: inline-flex; align-items: center; gap: 4px; padding: 6px 16px; background: #e0ebe5; color: #0d3d2a; border-radius: 6px; font-size: 13px; font-weight: 700; transition: all 0.2s; }
 .tarea-card:hover .btn-ver { background: #1a5c40; color: white; }
 .loading, .empty-state { text-align: center; padding: 60px 20px; color: #888; font-size: 15px; }
-
-/* ============================================
-   BOTÓN FLOTANTE (FAB)
-   ============================================ */
-.fab-crear-tarea {
-  position: fixed;
-  bottom: 90px;
-  right: 40px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 24px;
-  background: linear-gradient(135deg, #0d3d2a 0%, #1a5c40 100%);
-  color: white;
-  border: none;
-  border-radius: 30px;
-  font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 8px 25px rgba(13, 61, 42, 0.4);
-  transition: all 0.3s ease;
-  z-index: 1000;
-}
-
-.fab-crear-tarea:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 12px 30px rgba(13, 61, 42, 0.5);
-  background: linear-gradient(135deg, #1a5c40 0%, #2d7a55 100%);
-}
-
-.fab-crear-tarea:active {
-  transform: translateY(0) scale(1);
-}
-
-.fab-icon {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-}
 </style>
