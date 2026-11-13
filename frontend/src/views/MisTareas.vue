@@ -278,8 +278,8 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
    ============================================ */
 .fab-crear-tarea {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
+  bottom: 90px;
+  right: 40px;
   display: flex;
   align-items: center;
   gap: 8px;
