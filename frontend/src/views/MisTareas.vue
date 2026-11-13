@@ -220,13 +220,13 @@ onMounted(() => cargarTareas());
 .btn-crear-tarea {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  gap: 10px;
+  padding: 14px 28px;
   background: linear-gradient(135deg, #0d3d2a 0%, #1a5c40 100%);
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.25s;
@@ -239,10 +239,10 @@ onMounted(() => cargarTareas());
 }
 
 .btn-icon {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
-  filter: brightness(0) invert(1);
+  filter: none;
 }
 
 /* ============================================
