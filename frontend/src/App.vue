@@ -418,7 +418,7 @@ html, body, #app {
   height: 20px;
   object-fit: contain;
   /* ✅ Filtro para hacer el icono de logout blanco */
-  filter: brightness(0) invert(1);
+  filter: none;
 }
 
 /* ============================================
