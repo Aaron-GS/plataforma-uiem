@@ -40,15 +40,26 @@
           </div>
         </div>
 
-        <!-- ACCIONES GENERALES (Solo para Admin) -->
+        <!-- ✅ ACCIONES GENERALES (Solo para Admin) -->
         <div v-if="esAdmin" class="acciones-panel" style="background: white;">
-          <h3><img src="/src/assets/icons/icon-acciones.png" alt="" class="section-icon" /> Acciones Generales de la Tarea</h3>
-          <div class="acciones-buttons">
-            <template v-if="tarea.estado !== 'completada'">
-              <button @click="cambiarEstadoGeneral('completada')" class="btn-action success">✔ Aprobar y Completar Tarea General</button>
-              <button @click="cambiarEstadoGeneral('en_proceso')" class="btn-action danger">✖ Rechazar Tarea General</button>
-            </template>
-            <div v-else class="status-completed">🎉 Esta tarea general ha sido validada y completada.</div>
+          <h3><img src="/src/assets/icons/icon-acciones.png" alt="" class="section-icon" /> Confirmación Final de la Tarea</h3>
+          
+          <div v-if="tarea.estado === 'completada'" class="status-completed">
+            🎉 Esta tarea ha sido validada y completada en su totalidad.
+          </div>
+          
+          <div v-else class="acciones-buttons">
+            <button 
+              @click="confirmarTareaGeneral" 
+              class="btn-action success"
+              :disabled="!todasAreasCompletadas"
+              :title="!todasAreasCompletadas ? 'Debes completar todas las áreas primero' : 'Cerrar la tarea general'"
+            >
+              ✔ Confirmar Tareas Completadas
+            </button>
+            <span v-if="!todasAreasCompletadas" class="status-info">
+              (El botón se habilitará cuando todas las áreas estén en estado "Completada")
+            </span>
           </div>
         </div>
 
@@ -84,7 +95,7 @@
                     <button @click="descargarEvidencia(ev.id)" class="btn-descargar-mini">⬇</button>
                   </div>
                 </div>
-                <div v-if="ta.estado === 'en_proceso'">
+                <div v-if="ta.estado === 'en_proceso' && !esAdmin">
                   <SubirEvidencia :tareaId="tarea.id" :areaId="ta.area_id" @archivo-subido="cargarEvidencias" />
                 </div>
               </div>
@@ -108,7 +119,7 @@
                 </template>
               </div>
 
-              <!-- ✅ COMENTARIOS ESPECÍFICOS DEL ÁREA -->
+              <!-- COMENTARIOS ESPECÍFICOS DEL ÁREA -->
               <Comentarios :tareaId="tarea.id" :areaId="ta.area_id" />
 
             </div>
@@ -138,6 +149,12 @@ const loading = ref(true);
 
 const esAdmin = computed(() => authStore.isSuperAdmin);
 
+// ✅ Validar si TODAS las áreas están completadas
+const todasAreasCompletadas = computed(() => {
+  if (!tarea.value || !tarea.value.areas_asignadas) return false;
+  return tarea.value.areas_asignadas.every(ta => ta.estado === 'completada');
+});
+
 const cargarTarea = async () => {
   loading.value = true;
   try {
@@ -163,13 +180,13 @@ const getEvidenciasArea = (areaId) => {
   return evidencias.value.filter(e => e.area_id === areaId);
 };
 
-const cambiarEstadoGeneral = async (nuevoEstado) => {
-  if (!confirm(`¿Cambiar el estado de la tarea GENERAL a "${getEstadoLabel(nuevoEstado)}"?`)) return;
+const confirmarTareaGeneral = async () => {
+  if (!confirm('¿Estás seguro de cerrar esta tarea como COMPLETADA en su totalidad?')) return;
   try {
-    await api.put(`/tareas/${tarea.value.id}`, { estado: nuevoEstado });
+    await api.put(`/tareas/${tarea.value.id}`, { estado: 'completada' });
     await cargarTarea();
   } catch (error) {
-    alert('Error al cambiar estado general');
+    alert('Error al confirmar la tarea');
   }
 };
 
@@ -240,9 +257,10 @@ onMounted(() => {
 .btn-action { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .btn-action.primary { background: #2196f3; color: white; }
 .btn-action.success { background: #1a5c40; color: white; }
+.btn-action.success:disabled { background: #ccc; cursor: not-allowed; opacity: 0.7; }
 .btn-action.danger { background: #ffebee; color: #b71c1c; }
 .status-completed { background: #e0ebe5; color: #0d3d2a; padding: 12px 20px; border-radius: 8px; font-weight: 700; width: 100%; text-align: center;}
-.status-info { color: #666; font-style: italic; font-size: 14px; }
+.status-info { color: #666; font-style: italic; font-size: 13px; }
 
 .areas-panel { margin-bottom: 24px; }
 .areas-lista-detalle { display: flex; flex-direction: column; gap: 10px; }
