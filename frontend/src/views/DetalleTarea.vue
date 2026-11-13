@@ -40,7 +40,7 @@
           </div>
         </div>
 
-        <!-- ✅ ACCIONES GENERALES (Solo para Admin) -->
+        <!-- ACCIONES GENERALES (Solo para Admin) -->
         <div v-if="esAdmin" class="acciones-panel" style="background: white;">
           <h3><img src="/src/assets/icons/icon-acciones.png" alt="" class="section-icon" /> Confirmación Final de la Tarea</h3>
           
@@ -63,12 +63,19 @@
           </div>
         </div>
 
-        <!-- LISTADO DE ÁREAS -->
+        <!-- LISTADO DE ÁREAS (Filtrado por rol) -->
         <div class="areas-panel">
-          <h4 style="color: #0d3d2a; font-size: 16px; margin-bottom: 12px;">Avance por Área:</h4>
+          <h4 style="color: #0d3d2a; font-size: 16px; margin-bottom: 12px;">
+            {{ esAdmin ? 'Avance por Área:' : 'Avance de tu Área:' }}
+          </h4>
           
           <div class="areas-lista-detalle">
-            <div v-for="ta in tarea.areas_asignadas" :key="ta.id" class="area-detalle-card">
+            <!-- ✅ AQUÍ APLICAMOS EL FILTRO: Si esAdmin mostramos todo, si no, solo su área -->
+            <div 
+              v-for="ta in areasAMostrar" 
+              :key="ta.id" 
+              class="area-detalle-card"
+            >
               
               <div class="area-detalle-header">
                 <div class="area-info-principal">
@@ -95,6 +102,7 @@
                     <button @click="descargarEvidencia(ev.id)" class="btn-descargar-mini">⬇</button>
                   </div>
                 </div>
+                <!-- Subir evidencia (si está en proceso y no es admin) -->
                 <div v-if="ta.estado === 'en_proceso' && !esAdmin">
                   <SubirEvidencia :tareaId="tarea.id" :areaId="ta.area_id" @archivo-subido="cargarEvidencias" />
                 </div>
@@ -149,7 +157,19 @@ const loading = ref(true);
 
 const esAdmin = computed(() => authStore.isSuperAdmin);
 
-// ✅ Validar si TODAS las áreas están completadas
+// ✅ FILTRO DE SEGURIDAD: Admin ve todo, Gestor solo su área
+const areasAMostrar = computed(() => {
+  if (!tarea.value || !tarea.value.areas_asignadas) return [];
+  if (esAdmin.value) {
+    return tarea.value.areas_asignadas; // Admin ve todo
+  } else {
+    // Gestor solo ve su área (comparando con el area_id de su perfil)
+    const miAreaId = authStore.usuario?.area_id;
+    return tarea.value.areas_asignadas.filter(ta => ta.area_id === miAreaId);
+  }
+});
+
+// Validar si TODAS las áreas están completadas (para el botón general del admin)
 const todasAreasCompletadas = computed(() => {
   if (!tarea.value || !tarea.value.areas_asignadas) return false;
   return tarea.value.areas_asignadas.every(ta => ta.estado === 'completada');
