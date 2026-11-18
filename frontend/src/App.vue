@@ -32,31 +32,28 @@
             <span>Mis Tareas</span>
           </router-link>
           
-          <!-- ✅ EL ENLACE DE CREAR TAREA HA SIDO ELIMINADO DE AQUÍ -->
-           <!-- ✅ NUEVO ENLACE DE COMPLETADAS -->
-            <router-link 
+          <!-- ✅ Enlace a Tareas Completadas (Para todos los roles) -->
+          <router-link 
             to="/completadas" 
             class="nav-link" 
             @click="menuAbierto = false"
-            >
-           <img src="/src/assets/icons/icon-tareacompletada.png" alt="" class="nav-icon" />
-           <span>Tareas Completadas</span>
-           </router-link>
-            
+          >
+            <img src="/src/assets/icons/icon-tareacompletada.png" alt="" class="nav-icon" />
+            <span>Tareas Completadas</span>
+          </router-link>
           
-          
+          <!-- Dashboard (Solo Admin) -->
           <router-link 
             v-if="authStore.isSuperAdmin" 
             to="/dashboard" 
             class="nav-link" 
             @click="menuAbierto = false"
           >
-          
             <img src="/src/assets/icons/icon-dashboard.png" alt="" class="nav-icon" />
             <span>Dashboard</span>
           </router-link>
           
-          <!-- ✅ Calendario SOLO para Antolín (superadmin de RECTORÍA) -->
+          <!-- Calendario (Solo Antolín) -->
           <router-link 
             v-if="authStore.isSuperAdmin && authStore.usuario?.email === 'antolin.celote@uiem.edu.mx'" 
             to="/calendario" 
@@ -67,18 +64,26 @@
             <span>Mi Calendario</span>
           </router-link>
 
-          
           <div class="nav-divider"></div>
           
           <Notificaciones />
           
+          <!-- ============================================ -->
+          <!-- MENÚ DE USUARIO (AHORA CON EL ÁREA) -->
+          <!-- ============================================ -->
           <div class="user-menu">
             <span class="user-avatar">{{ getIniciales() }}</span>
             <div class="user-info">
               <span class="user-name">{{ authStore.nombreCompleto }}</span>
-              <span class="user-rol" :class="authStore.usuario?.rol">
-                {{ authStore.rolLabel }}
-              </span>
+              <div class="user-details">
+                <span class="user-rol" :class="authStore.usuario?.rol">
+                  {{ authStore.rolLabel }}
+                </span>
+                <!-- ✅ NUEVA ETIQUETA DEL ÁREA -->
+                <span class="user-area" v-if="authStore.usuario?.area">
+                  {{ authStore.usuario.area.nombre }}
+                </span>
+              </div>
             </div>
           </div>
           
@@ -296,7 +301,6 @@ html, body, #app {
   width: 20px;
   height: 20px;
   object-fit: contain;
-  /* ✅ Los iconos mantienen su color original */
   filter: none;
   opacity: 0.9;
   transition: opacity 0.2s;
@@ -361,6 +365,14 @@ html, body, #app {
   white-space: nowrap;
 }
 
+/* ✅ ESTILOS PARA EL ROL Y EL ÁREA */
+.user-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
 .user-rol {
   font-size: 10px;
   font-weight: 700;
@@ -369,6 +381,21 @@ html, body, #app {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   width: fit-content;
+}
+
+.user-area {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.15);
+  padding: 1px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-rol.superadmin {
@@ -429,7 +456,6 @@ html, body, #app {
   width: 20px;
   height: 20px;
   object-fit: contain;
-  /* ✅ Filtro para hacer el icono de logout blanco */
   filter: none;
 }
 
@@ -462,7 +488,7 @@ html, body, #app {
   }
   
   .nav-link span {
-    display: none;  /* Solo iconos en tablet */
+    display: none;
   }
   
   .nav-icon {
@@ -510,7 +536,6 @@ html, body, #app {
     letter-spacing: 0.4px;
   }
   
-  /* Menú colapsable */
   .nav-links {
     position: fixed;
     top: 68px;
@@ -541,7 +566,7 @@ html, body, #app {
   }
   
   .nav-link span {
-    display: inline;  /* Mostrar texto en móvil */
+    display: inline;
   }
   
   .nav-icon {
@@ -597,7 +622,7 @@ html, body, #app {
   }
   
   .brand-text-container {
-    display: none;  /* Solo logo */
+    display: none;
   }
   
   .brand-logo {
