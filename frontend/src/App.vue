@@ -39,7 +39,7 @@
             class="nav-link" 
             @click="menuAbierto = false"
             >
-           <img src="/src/assets/icons/icon-tareacompletadas.png" alt="" class="nav-icon" style="filter: grayscale(100%); opacity: 0.8;" />
+           <img src="/src/assets/icons/icon-tareacompletada.png" alt="" class="nav-icon" style="filter: grayscale(100%); opacity: 0.8;" />
            <span>Tareas Completadas</span>
            </router-link>
             
