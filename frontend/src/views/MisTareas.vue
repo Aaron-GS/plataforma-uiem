@@ -103,19 +103,31 @@
           </div>
         </div>
 
-        <!-- ETIQUETAS DE PRIORIDAD Y FECHA -->
+        <!-- ✅ ETIQUETAS SEPARADAS DE PRIORIDAD, FECHA Y HORA -->
         <div class="tarea-meta">
-          <span class="meta-label">Prioridad:</span>
-          <span class="prioridad" :class="tarea.prioridad">
-            <img src="/src/assets/icons/icon-prioridad.png" alt="" class="meta-icon" />
-            {{ tarea.prioridad.toUpperCase() }}
-          </span>
-          
-          <span v-if="tarea.fecha_limite" class="meta-label" style="margin-left: 8px;">Fecha Límite:</span>
-          <span v-if="tarea.fecha_limite" class="fecha" :class="{ 'texto-vencido': estaVencida(tarea) }">
-            <img src="/src/assets/icons/icon-fecha.png" alt="" class="meta-icon" />
-            {{ formatDate(tarea.fecha_limite) }}
-          </span>
+          <div class="meta-item">
+            <span class="meta-label">Prioridad:</span>
+            <span class="prioridad" :class="tarea.prioridad">
+              <img src="/src/assets/icons/icon-prioridad.png" alt="" class="meta-icon" />
+              {{ tarea.prioridad.toUpperCase() }}
+            </span>
+          </div>
+
+          <div v-if="tarea.fecha_limite" class="meta-item">
+            <span class="meta-label">Fecha Límite:</span>
+            <span class="fecha" :class="{ 'texto-vencido': estaVencida(tarea) }">
+              <img src="/src/assets/icons/icon-fecha.png" alt="" class="meta-icon" />
+              {{ formatDateOnly(tarea.fecha_limite) }}
+            </span>
+          </div>
+
+          <div v-if="tarea.fecha_limite" class="meta-item">
+            <span class="meta-label">Hora Límite:</span>
+            <span class="fecha" :class="{ 'texto-vencido': estaVencida(tarea) }">
+              <img src="/src/assets/icons/icon-fecha.png" alt="" class="meta-icon" style="filter: grayscale(100%); opacity: 0.7;" />
+              {{ formatTimeOnly(tarea.fecha_limite) }}
+            </span>
+          </div>
         </div>
         
         <div class="tarea-footer">
@@ -156,7 +168,6 @@ const tareasFiltradas = computed(() => {
   if (filtros.value.estado) resultado = resultado.filter(t => t.estado === filtros.value.estado);
   if (filtros.value.prioridad) resultado = resultado.filter(t => t.prioridad === filtros.value.prioridad);
   
-  // ✅ ORDENAR: Las más próximas a vencer primero
   return resultado.sort((a, b) => {
     if (!a.fecha_limite) return 1;
     if (!b.fecha_limite) return -1;
@@ -176,7 +187,6 @@ const getPorcentaje = (tarea) => {
   return Math.round((completadas / total) * 100);
 };
 
-// ✅ VALIDAR SI LA TAREA ESTÁ VENCIDA
 const estaVencida = (tarea) => {
   if (!tarea.fecha_limite) return false;
   if (tarea.estado === 'completada') return false;
@@ -200,13 +210,15 @@ const verDetalle = (id) => router.push(`/tareas/${id}`);
 const irACrearTarea = () => router.push('/tareas');
 const getEstadoLabel = (e) => ({ 'pendiente': 'Pendiente', 'en_proceso': 'En Proceso', 'por_validar': 'Por Validar', 'completada': 'Completada', 'rechazada': 'Rechazada' }[e] || e);
 
-// ✅ Mostrar fecha y hora
-const formatDate = (d) => {
+// ✅ Funciones para separar la fecha y la hora
+const formatDateOnly = (d) => {
   if (!d) return 'Sin fecha';
-  return new Date(d).toLocaleString('es-MX', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
+  return new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const formatTimeOnly = (d) => {
+  if (!d) return 'Sin hora';
+  return new Date(d).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 };
 
 onMounted(() => cargarTareas());
@@ -260,28 +272,14 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .tarea-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; }
 .tarea-header h3 { font-size: 16px; color: #0d3d2a; margin: 0; flex: 1; font-weight: 700; }
 
-/* ✅ CONTENEDOR DE ETIQUETAS DE ESTADO */
-.estados-container {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
+.estados-container { display: flex; gap: 6px; align-items: center; }
 .estado { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; text-transform: uppercase; white-space: nowrap; }
 .estado.pendiente { background: #fff3e0; color: #e65100; }
 .estado.en_proceso { background: #e3f2fd; color: #0d47a1; }
 .estado.por_validar { background: #f3e5f5; color: #6a1b9a; }
 .estado.completada { background: #e0ebe5; color: #0d3d2a; }
 .estado.rechazada { background: #ffebee; color: #b71c1c; }
-
-/* ✅ ESTILO PARA "VENCIDA" */
-.estado.vencida {
-  background: #ffebee;
-  color: #b71c1c;
-  border: 1px solid #f44336;
-  font-weight: 800;
-  animation: pulse 2s infinite;
-}
+.estado.vencida { background: #ffebee; color: #b71c1c; border: 1px solid #f44336; font-weight: 800; animation: pulse 2s infinite; }
 
 @keyframes pulse {
   0% { opacity: 1; }
@@ -298,20 +296,16 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .progreso-fill.completo { background: #4caf50; }
 
 /* ✅ ESTILOS PARA LAS ETIQUETAS DE TEXTO */
-.tarea-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; font-size: 12px; }
+.tarea-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; font-size: 12px; }
+.meta-item { display: flex; align-items: center; gap: 4px; }
 .meta-label { font-weight: 700; color: #666; text-transform: uppercase; font-size: 11px; }
-.prioridad, .fecha, .area { display: inline-flex; align-items: center; }
+.prioridad, .fecha { display: inline-flex; align-items: center; }
 .prioridad { padding: 2px 8px; border-radius: 4px; font-weight: 700; }
 .prioridad.baja { background: #e0ebe5; color: #0d3d2a; }
 .prioridad.media { background: #fff3e0; color: #e65100; }
 .prioridad.alta { background: #ffebee; color: #b71c1c; }
 .fecha { color: #888; font-weight: 600; }
-
-/* ✅ TEXTO DE FECHA VENCIDA */
-.fecha.texto-vencido {
-  color: #b71c1c;
-  font-weight: 700;
-}
+.fecha.texto-vencido { color: #b71c1c; font-weight: 700; }
 
 .meta-icon { width: 14px; height: 14px; margin-right: 4px; }
 .meta-icon-small { width: 12px; height: 12px; margin-right: 4px; opacity: 0.7; }
