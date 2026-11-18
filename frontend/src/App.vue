@@ -326,6 +326,9 @@ html, body, #app {
 /* ============================================
    MENÚ DE USUARIO
    ============================================ */
+/* ============================================
+   MENÚ DE USUARIO (Ajustado)
+   ============================================ */
 .user-menu {
   display: flex;
   align-items: center;
@@ -334,6 +337,7 @@ html, body, #app {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 30px;
   margin-left: 8px;
+  max-width: 320px; /* ✅ Evita que crezca demasiado */
 }
 
 .user-avatar {
@@ -355,7 +359,8 @@ html, body, #app {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 0;
+  min-width: 0; /* ✅ Permite que el texto se recorte */
+  flex: 1;
 }
 
 .user-name {
@@ -363,14 +368,17 @@ html, body, #app {
   font-weight: 700;
   color: white;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* ✅ Pone "..." si el nombre es muy largo */
 }
 
-/* ✅ ESTILOS PARA EL ROL Y EL ÁREA */
 .user-details {
   display: flex;
   align-items: center;
   gap: 6px;
   margin-top: 2px;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .user-rol {
@@ -381,6 +389,7 @@ html, body, #app {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   width: fit-content;
+  white-space: nowrap;
 }
 
 .user-area {
@@ -393,9 +402,9 @@ html, body, #app {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
-  max-width: 150px;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: ellipsis; /* ✅ Pone "..." si el área es muy larga */
+  max-width: 120px; /* ✅ Limita el ancho del área */
 }
 
 .user-rol.superadmin {
