@@ -41,9 +41,21 @@
             </select>
           </div>
 
+          <!-- ✅ Fecha y Hora General Separadas -->
           <div class="field">
             <label>Fecha Límite General</label>
-            <input v-model="nuevaTarea.fecha_limite" type="datetime-local" />
+            <div class="date-input-group">
+              <input 
+                v-model="nuevaTarea.fecha_limite" 
+                type="date" 
+                class="input-date" 
+              />
+              <input 
+                v-model="nuevaTarea.hora_limite" 
+                type="time" 
+                class="input-time" 
+              />
+            </div>
           </div>
         </div>
 
@@ -51,7 +63,6 @@
         <div class="areas-section">
           <div class="areas-header">
             <h3>
-              <!-- ✅ El ícono ahora tiene tamaño controlado desde el CSS -->
               <img src="/src/assets/icons/icon-area.png" alt="" class="section-icon-white" />
               Áreas Destino ({{ areasSeleccionadas.length }} seleccionadas)
             </h3>
@@ -93,18 +104,32 @@
                     </button>
                   </div>
 
-                  <!-- Panel desplegable para asignar usuario -->
+                  <!-- Panel desplegable para asignar usuario y fecha específica -->
                   <div v-if="areasExpandidas.includes(area.id)" class="area-usuario-panel">
-                    <select v-model="areasUsuarios[area.id]" class="select-usuario">
-                      <option :value="null">Sin asignar (toda el área)</option>
-                      <option 
-                        v-for="user in getUsuariosDeArea(area.id)" 
-                        :key="user.id" 
-                        :value="user.id"
-                      >
-                        {{ user.nombre }} {{ user.apellidos }}
-                      </option>
-                    </select>
+                    <div class="area-panel-content">
+                      <select v-model="areasUsuarios[area.id]" class="select-usuario">
+                        <option :value="null">Sin asignar (toda el área)</option>
+                        <option 
+                          v-for="user in getUsuariosDeArea(area.id)" 
+                          :key="user.id" 
+                          :value="user.id"
+                        >
+                          {{ user.nombre }} {{ user.apellidos }}
+                        </option>
+                      </select>
+                      <div class="date-input-group-small">
+                        <input 
+                          v-model="areasFechas[area.id]" 
+                          type="date" 
+                          class="input-date-small" 
+                        />
+                        <input 
+                          v-model="areasHoras[area.id]" 
+                          type="time" 
+                          class="input-time-small" 
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -133,8 +158,10 @@ const authStore = useAuthStore();
 const areas = ref([]);
 const usuarios = ref([]);
 const areasSeleccionadas = ref([]);
-const areasExpandidas = ref([]); // Para saber qué áreas tienen el panel abierto
+const areasExpandidas = ref([]);
 const areasUsuarios = ref({});
+const areasFechas = ref({});
+const areasHoras = ref({});
 
 const areasAgrupadas = computed(() => {
   const grupos = {};
@@ -151,7 +178,8 @@ const nuevaTarea = ref({
   titulo: '',
   descripcion: '',
   prioridad: 'media',
-  fecha_limite: ''
+  fecha_limite: '',
+  hora_limite: ''
 });
 
 const volver = () => router.push('/mis-tareas');
@@ -163,9 +191,9 @@ const getUsuariosDeArea = (areaId) => {
 const toggleExpandir = (areaId) => {
   const index = areasExpandidas.value.indexOf(areaId);
   if (index > -1) {
-    areasExpandidas.value.splice(index, 1); // Cerrar
+    areasExpandidas.value.splice(index, 1);
   } else {
-    areasExpandidas.value.push(areaId); // Abrir
+    areasExpandidas.value.push(areaId);
   }
 };
 
@@ -176,6 +204,8 @@ const seleccionarTodas = () => {
 const limpiarSeleccion = () => {
   areasSeleccionadas.value = [];
   areasUsuarios.value = {};
+  areasFechas.value = {};
+  areasHoras.value = {};
   areasExpandidas.value = [];
 };
 
@@ -203,18 +233,38 @@ const crearTarea = async () => {
     return;
   }
 
+  if (!nuevaTarea.value.titulo || !nuevaTarea.value.titulo.trim()) {
+    alert('⚠️ El título es obligatorio');
+    return;
+  }
+
   try {
-    const areasAsignadas = areasSeleccionadas.value.map(areaId => ({
-      area_id: areaId,
-      asignada_a: areasUsuarios.value[areaId] || null,
-      fecha_limite: nuevaTarea.value.fecha_limite || null
-    }));
+    // ✅ Combinar fecha y hora general
+    let fechaGeneralCompleta = null;
+    if (nuevaTarea.value.fecha_limite) {
+      const hora = nuevaTarea.value.hora_limite || '23:59';
+      fechaGeneralCompleta = `${nuevaTarea.value.fecha_limite}T${hora}:00`;
+    }
+
+    const areasAsignadas = areasSeleccionadas.value.map(areaId => {
+      let fechaAreaCompleta = null;
+      if (areasFechas.value[areaId]) {
+        const horaArea = areasHoras.value[areaId] || '23:59';
+        fechaAreaCompleta = `${areasFechas.value[areaId]}T${horaArea}:00`;
+      }
+
+      return {
+        area_id: areaId,
+        asignada_a: areasUsuarios.value[areaId] || null,
+        fecha_limite: fechaAreaCompleta || fechaGeneralCompleta
+      };
+    });
 
     const datosTarea = {
       titulo: nuevaTarea.value.titulo?.trim(),
       descripcion: nuevaTarea.value.descripcion?.trim() || null,
       prioridad: nuevaTarea.value.prioridad || 'media',
-      fecha_limite: nuevaTarea.value.fecha_limite || null,
+      fecha_limite: fechaGeneralCompleta,
       areas_asignadas: areasAsignadas
     };
 
@@ -223,9 +273,11 @@ const crearTarea = async () => {
     alert(`✅ ${response.data.message}`);
     
     // Limpiar formulario
-    nuevaTarea.value = { titulo: '', descripcion: '', prioridad: 'media', fecha_limite: '' };
+    nuevaTarea.value = { titulo: '', descripcion: '', prioridad: 'media', fecha_limite: '', hora_limite: '' };
     areasSeleccionadas.value = [];
     areasUsuarios.value = {};
+    areasFechas.value = {};
+    areasHoras.value = {};
     areasExpandidas.value = [];
     
   } catch (error) {
@@ -258,6 +310,52 @@ h1 { color: #0d3d2a; font-size: 28px; font-weight: 800; display: flex; align-ite
 .field input, .field select, .field textarea { width: 100%; padding: 10px 14px; border: 2px solid #e0ebe5; border-radius: 6px; font-size: 14px; font-family: inherit; transition: all 0.2s; background: #f5faf7; box-sizing: border-box; }
 .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #1a5c40; background: white; box-shadow: 0 0 0 3px rgba(26, 92, 64, 0.1); }
 
+/* ✅ NUEVOS ESTILOS PARA LOS INPUTS DE FECHA Y HORA */
+.date-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.input-date, .input-time {
+  padding: 8px 12px;
+  border: 2px solid #e0ebe5;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.input-date:focus, .input-time:focus {
+  outline: none;
+  border-color: #1a5c40;
+  box-shadow: 0 0 0 3px rgba(26, 92, 64, 0.1);
+}
+
+.input-date { flex: 2; }
+.input-time { flex: 1; }
+
+/* Estilos para inputs de fecha por área */
+.date-input-group-small {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.input-date-small, .input-time-small {
+  padding: 6px 8px;
+  border: 1px solid #e0ebe5;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+  font-family: inherit;
+}
+
+.input-date-small:focus, .input-time-small:focus {
+  outline: none;
+  border-color: #1a5c40;
+}
+
 /* =========================================
    SELECTOR DE ÁREAS
    ========================================= */
@@ -265,12 +363,11 @@ h1 { color: #0d3d2a; font-size: 28px; font-weight: 800; display: flex; align-ite
 .areas-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: linear-gradient(135deg, #0d3d2a 0%, #1a5c40 100%); color: white; }
 .areas-header h3 { font-size: 14px; margin: 0; color: white; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 
-/* ✅ ARREGLO DEL ICONO GIGANTE */
 .section-icon-white {
   width: 18px !important;
   height: 18px !important;
   object-fit: contain;
-  filter: brightness(0) invert(1); /* Lo hace blanco */
+  filter: brightness(0) invert(1);
 }
 
 .areas-actions { display: flex; gap: 8px; }
@@ -279,7 +376,6 @@ h1 { color: #0d3d2a; font-size: 28px; font-weight: 800; display: flex; align-ite
 
 .areas-lista { padding: 12px; max-height: 400px; overflow-y: auto; }
 .categoria-grupo { margin-bottom: 16px; }
-/* Formato más elegante para las categorías */
 .categoria-titulo {
   font-size: 14px;
   font-weight: 800;
@@ -291,11 +387,7 @@ h1 { color: #0d3d2a; font-size: 28px; font-weight: 800; display: flex; align-ite
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-
-/* Quitar el margen superior al primer grupo para que no quede espacio extra */
-.categoria-grupo:first-child .categoria-titulo {
-  margin-top: 0;
-}
+.categoria-grupo:first-child .categoria-titulo { margin-top: 0; }
 .categoria-areas { display: flex; flex-direction: column; gap: 6px; }
 
 .area-item { padding: 8px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.2s; background: white; }
@@ -305,20 +397,18 @@ h1 { color: #0d3d2a; font-size: 28px; font-weight: 800; display: flex; align-ite
 .area-checkbox input { margin-right: 10px; width: 16px; height: 16px; cursor: pointer; accent-color: #1a5c40; }
 .area-nombre { font-weight: 600; color: #333; }
 
-/* Botón para asignar usuario */
 .btn-expand { background: none; border: 1px solid #e0ebe5; padding: 4px 10px; border-radius: 20px; font-size: 11px; color: #1a5c40; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .btn-expand:hover { background: #e0ebe5; }
 
-/* Panel de usuario */
-.area-usuario-panel { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e0ebe5; display: flex; }
-.select-usuario { width: 100%; padding: 8px 12px; border: 1px solid #1a5c40; border-radius: 6px; font-size: 12px; background: white; font-family: inherit; outline: none; }
+.area-usuario-panel { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e0ebe5; }
+.area-panel-content { display: flex; gap: 8px; align-items: center; }
+.select-usuario { flex: 2; padding: 8px 12px; border: 1px solid #1a5c40; border-radius: 6px; font-size: 12px; background: white; font-family: inherit; outline: none; }
 
 .btn-primary { display: inline-flex; align-items: center; gap: 6px; margin-top: 24px; padding: 14px 28px; background: linear-gradient(135deg, #0d3d2a 0%, #1a5c40 100%); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 12px rgba(13, 61, 42, 0.3); width: 100%; justify-content: center; }
 .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #1a5c40 0%, #2d7a55 100%); transform: translateY(-2px); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-icon { width: 18px; height: 18px; object-fit: contain; filter: brightness(0) invert(1); }
 
-/* Acceso denegado */
 .acceso-denegado { display: flex; justify-content: center; align-items: center; min-height: 60vh; }
 .denegado-card { background: white; padding: 48px; border-radius: 16px; box-shadow: 0 8px 30px rgba(13, 61, 42, 0.15); text-align: center; max-width: 500px; border-top: 4px solid #1a5c40; }
 .denegado-card .icono { font-size: 64px; display: block; margin-bottom: 16px; }
