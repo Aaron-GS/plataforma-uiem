@@ -77,7 +77,11 @@
       >
         <div class="tarea-header">
           <h3>{{ tarea.titulo }}</h3>
-          <span class="estado" :class="tarea.estado">{{ getEstadoLabel(tarea.estado) }}</span>
+          <div class="estados-container">
+            <!-- ✅ Etiqueta de Vencida -->
+            <span v-if="estaVencida(tarea)" class="estado vencida">VENCIDA</span>
+            <span class="estado" :class="tarea.estado">{{ getEstadoLabel(tarea.estado) }}</span>
+          </div>
         </div>
         <p class="descripcion">{{ tarea.descripcion || 'Sin descripción' }}</p>
         
@@ -99,7 +103,7 @@
           </div>
         </div>
 
-        <!-- ✅ AQUÍ AGREGAMOS LAS ETIQUETAS DE PRIORIDAD Y FECHA -->
+        <!-- ETIQUETAS DE PRIORIDAD Y FECHA -->
         <div class="tarea-meta">
           <span class="meta-label">Prioridad:</span>
           <span class="prioridad" :class="tarea.prioridad">
@@ -108,7 +112,7 @@
           </span>
           
           <span v-if="tarea.fecha_limite" class="meta-label" style="margin-left: 8px;">Fecha Límite:</span>
-          <span v-if="tarea.fecha_limite" class="fecha">
+          <span v-if="tarea.fecha_limite" class="fecha" :class="{ 'texto-vencido': estaVencida(tarea) }">
             <img src="/src/assets/icons/icon-fecha.png" alt="" class="meta-icon" />
             {{ formatDate(tarea.fecha_limite) }}
           </span>
@@ -151,7 +155,13 @@ const tareasFiltradas = computed(() => {
   }
   if (filtros.value.estado) resultado = resultado.filter(t => t.estado === filtros.value.estado);
   if (filtros.value.prioridad) resultado = resultado.filter(t => t.prioridad === filtros.value.prioridad);
-  return resultado;
+  
+  // ✅ ORDENAR: Las más próximas a vencer primero
+  return resultado.sort((a, b) => {
+    if (!a.fecha_limite) return 1;
+    if (!b.fecha_limite) return -1;
+    return new Date(a.fecha_limite) - new Date(b.fecha_limite);
+  });
 });
 
 const getAreasCompletadas = (tarea) => {
@@ -164,6 +174,13 @@ const getPorcentaje = (tarea) => {
   const total = tarea.areas_asignadas.length;
   const completadas = getAreasCompletadas(tarea);
   return Math.round((completadas / total) * 100);
+};
+
+// ✅ VALIDAR SI LA TAREA ESTÁ VENCIDA
+const estaVencida = (tarea) => {
+  if (!tarea.fecha_limite) return false;
+  if (tarea.estado === 'completada') return false;
+  return new Date(tarea.fecha_limite) < new Date();
 };
 
 const cargarTareas = async () => {
@@ -182,7 +199,15 @@ const limpiarFiltros = () => { filtros.value = { busqueda: '', estado: '', prior
 const verDetalle = (id) => router.push(`/tareas/${id}`);
 const irACrearTarea = () => router.push('/tareas');
 const getEstadoLabel = (e) => ({ 'pendiente': 'Pendiente', 'en_proceso': 'En Proceso', 'por_validar': 'Por Validar', 'completada': 'Completada', 'rechazada': 'Rechazada' }[e] || e);
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('es-MX') : 'Sin fecha';
+
+// ✅ Mostrar fecha y hora
+const formatDate = (d) => {
+  if (!d) return 'Sin fecha';
+  return new Date(d).toLocaleString('es-MX', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+};
 
 onMounted(() => cargarTareas());
 </script>
@@ -234,12 +259,36 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .tarea-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(13, 61, 42, 0.15); border-left-color: #2d7a55; }
 .tarea-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; }
 .tarea-header h3 { font-size: 16px; color: #0d3d2a; margin: 0; flex: 1; font-weight: 700; }
+
+/* ✅ CONTENEDOR DE ETIQUETAS DE ESTADO */
+.estados-container {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .estado { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; text-transform: uppercase; white-space: nowrap; }
 .estado.pendiente { background: #fff3e0; color: #e65100; }
 .estado.en_proceso { background: #e3f2fd; color: #0d47a1; }
 .estado.por_validar { background: #f3e5f5; color: #6a1b9a; }
 .estado.completada { background: #e0ebe5; color: #0d3d2a; }
 .estado.rechazada { background: #ffebee; color: #b71c1c; }
+
+/* ✅ ESTILO PARA "VENCIDA" */
+.estado.vencida {
+  background: #ffebee;
+  color: #b71c1c;
+  border: 1px solid #f44336;
+  font-weight: 800;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
 .descripcion { color: #666; font-size: 14px; margin: 8px 0 12px 0; line-height: 1.5; }
 
 .progreso-resumen { background: #f8f9fa; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; border: 1px solid #e0ebe5; }
@@ -257,6 +306,13 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .prioridad.media { background: #fff3e0; color: #e65100; }
 .prioridad.alta { background: #ffebee; color: #b71c1c; }
 .fecha { color: #888; font-weight: 600; }
+
+/* ✅ TEXTO DE FECHA VENCIDA */
+.fecha.texto-vencido {
+  color: #b71c1c;
+  font-weight: 700;
+}
+
 .meta-icon { width: 14px; height: 14px; margin-right: 4px; }
 .meta-icon-small { width: 12px; height: 12px; margin-right: 4px; opacity: 0.7; }
 .tarea-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #e0ebe5; }
