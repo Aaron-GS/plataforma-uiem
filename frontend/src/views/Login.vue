@@ -194,7 +194,7 @@ const contactarSoporte = () => {
   /* ✅ IMAGEN DE FONDO con degradado verde encima */
   background-image: 
     linear-gradient(160deg, rgba(13, 61, 42, 0.85) 0%, rgba(26, 92, 64, 0.75) 50%, rgba(13, 61, 42, 0.9) 100%),
-    url('/src/assets/campus2.jpg');
+    url('/src/assets/campus4.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
