@@ -69,7 +69,7 @@
           <Notificaciones />
           
           <!-- ============================================ -->
-          <!-- MENÚ DE USUARIO (AHORA CON EL ÁREA) -->
+          <!-- MENÚ DE USUARIO (Ajustado) -->
           <!-- ============================================ -->
           <div class="user-menu">
             <span class="user-avatar">{{ getIniciales() }}</span>
@@ -79,7 +79,7 @@
                 <span class="user-rol" :class="authStore.usuario?.rol">
                   {{ authStore.rolLabel }}
                 </span>
-                <!-- ✅ NUEVA ETIQUETA DEL ÁREA -->
+                <!-- ✅ ETIQUETA DEL ÁREA -->
                 <span class="user-area" v-if="authStore.usuario?.area">
                   {{ authStore.usuario.area.nombre }}
                 </span>
@@ -324,9 +324,6 @@ html, body, #app {
 }
 
 /* ============================================
-   MENÚ DE USUARIO
-   ============================================ */
-/* ============================================
    MENÚ DE USUARIO (Ajustado)
    ============================================ */
 .user-menu {
@@ -337,7 +334,7 @@ html, body, #app {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 30px;
   margin-left: 8px;
-  max-width: 320px; /* ✅ Evita que crezca demasiado */
+  max-width: 340px; /* ✅ Evita que crezca demasiado */
 }
 
 .user-avatar {
@@ -372,6 +369,7 @@ html, body, #app {
   text-overflow: ellipsis; /* ✅ Pone "..." si el nombre es muy largo */
 }
 
+/* ✅ CONTENEDOR DE ROL Y ÁREA */
 .user-details {
   display: flex;
   align-items: center;
@@ -450,6 +448,7 @@ html, body, #app {
   font-size: 13px;
   font-weight: 700;
   height: 44px;
+  flex-shrink: 0; /* ✅ Evita que el botón se encoja o se salga */
 }
 
 .btn-logout:hover {
@@ -512,6 +511,7 @@ html, body, #app {
   
   .user-menu {
     padding: 6px;
+    max-width: none;
   }
 }
 
@@ -597,6 +597,7 @@ html, body, #app {
     padding: 12px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.1);
+    max-width: none;
   }
   
   .user-info {
@@ -609,6 +610,7 @@ html, body, #app {
     width: 100%;
     height: auto;
     gap: 10px;
+    justify-content: center;
   }
   
   .btn-logout::after {
