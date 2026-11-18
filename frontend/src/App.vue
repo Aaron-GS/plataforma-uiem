@@ -183,13 +183,13 @@ html, body, #app {
 .nav-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 16px; /* ✅ Un poco menos de padding para ganar espacio */
   display: flex;
   justify-content: space-between;
   align-items: center;
   height: 72px;
   position: relative;
-  gap: 20px;
+  gap: 10px; /* ✅ Reducimos el espacio entre marca y menú */
 }
 
 /* ============================================
@@ -198,15 +198,15 @@ html, body, #app {
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   min-width: 0;
   flex-shrink: 0;
-  max-width: 420px;
+  max-width: 380px;
 }
 
 .brand-logo {
-  width: 48px;
-  height: 48px;
+  width: 42px; /* ✅ Un poco más pequeño */
+  height: 42px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
   flex-shrink: 0;
@@ -220,7 +220,7 @@ html, body, #app {
 }
 
 .brand-title {
-  font-size: 10px;
+  font-size: 9px; /* ✅ Más pequeño */
   font-weight: 800;
   letter-spacing: 0.4px;
   color: white;
@@ -232,7 +232,7 @@ html, body, #app {
 }
 
 .brand-subtitle {
-  font-size: 8.5px;
+  font-size: 8px; /* ✅ Más pequeño */
   font-weight: 600;
   letter-spacing: 0.6px;
   color: rgba(255, 255, 255, 0.7);
@@ -264,24 +264,24 @@ html, body, #app {
 }
 
 /* ============================================
-   NAV LINKS
+   NAV LINKS (BOTONES MÁS PEQUEÑOS)
    ============================================ */
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px; /* ✅ Menos espacio entre botones */
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 13px; /* ✅ Fuente más pequeña */
   font-weight: 600;
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: 6px 10px; /* ✅ Botones más compactos */
+  border-radius: 6px;
   transition: all 0.25s;
   white-space: nowrap;
 }
@@ -294,12 +294,12 @@ html, body, #app {
 .nav-link.router-link-active {
   background: rgba(255, 255, 255, 0.2);
   color: white;
-  box-shadow: inset 0 -3px 0 #4ade80;
+  box-shadow: inset 0 -2px 0 #4ade80;
 }
 
 .nav-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px; /* ✅ Iconos un poco más pequeños */
+  height: 18px;
   object-fit: contain;
   filter: none;
   opacity: 0.9;
@@ -324,29 +324,29 @@ html, body, #app {
 }
 
 /* ============================================
-   MENÚ DE USUARIO (Ajustado)
+   MENÚ DE USUARIO (MÁS COMPACTO)
    ============================================ */
 .user-menu {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 14px 6px 6px;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 30px;
-  margin-left: 8px;
-  max-width: 340px; /* ✅ Evita que crezca demasiado */
+  margin-left: 4px;
+  max-width: 260px; /* ✅ Ajustado para no empujar */
 }
 
 .user-avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px; /* ✅ Un poco más pequeño */
+  height: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg, #4ade80, #2d7a55);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 12px;
   color: white;
   border: 2px solid rgba(255, 255, 255, 0.3);
   flex-shrink: 0;
@@ -355,80 +355,61 @@ html, body, #app {
 .user-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0; /* ✅ Permite que el texto se recorte */
+  gap: 1px;
+  min-width: 0;
   flex: 1;
 }
 
 .user-name {
-  font-size: 13px;
+  font-size: 12px; /* ✅ Más pequeño */
   font-weight: 700;
   color: white;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* ✅ Pone "..." si el nombre es muy largo */
+  text-overflow: ellipsis;
 }
 
-/* ✅ CONTENEDOR DE ROL Y ÁREA */
 .user-details {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 2px;
+  gap: 4px;
+  margin-top: 1px;
   flex-wrap: nowrap;
   overflow: hidden;
 }
 
 .user-rol {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  padding: 1px 8px;
-  border-radius: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   width: fit-content;
   white-space: nowrap;
 }
 
 .user-area {
-  font-size: 9px;
+  font-size: 8px; /* ✅ Área más pequeña */
   font-weight: 700;
   color: rgba(255, 255, 255, 0.8);
   background: rgba(255, 255, 255, 0.15);
-  padding: 1px 8px;
-  border-radius: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* ✅ Pone "..." si el área es muy larga */
-  max-width: 120px; /* ✅ Limita el ancho del área */
+  text-overflow: ellipsis;
+  max-width: 80px; /* ✅ Área con ancho limitado */
 }
 
-.user-rol.superadmin {
-  background: rgba(255, 107, 107, 0.9);
-  color: white;
-}
-
-.user-rol.admin_area {
-  background: rgba(78, 205, 196, 0.9);
-  color: white;
-}
-
-.user-rol.gestor {
-  background: rgba(255, 230, 109, 0.9);
-  color: #333;
-}
-
-.user-rol.ejecutor {
-  background: rgba(168, 230, 207, 0.9);
-  color: #333;
-}
-
-.user-rol.encargado {
-  background: rgba(255, 193, 7, 0.9);
-  color: #333;
-}
+/* Colores de roles */
+.user-rol.superadmin { background: rgba(255, 107, 107, 0.9); color: white; }
+.user-rol.admin_area { background: rgba(78, 205, 196, 0.9); color: white; }
+.user-rol.gestor { background: rgba(255, 230, 109, 0.9); color: #333; }
+.user-rol.ejecutor { background: rgba(168, 230, 207, 0.9); color: #333; }
+.user-rol.encargado { background: rgba(255, 193, 7, 0.9); color: #333; }
 
 /* ============================================
    BOTÓN CERRAR SESIÓN
@@ -436,19 +417,19 @@ html, body, #app {
 .btn-logout {
   background: rgba(255, 255, 255, 0.15);
   border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: 6px 12px; /* ✅ Un poco más compacto */
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.25s;
   margin-left: 4px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   color: white;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  height: 44px;
-  flex-shrink: 0; /* ✅ Evita que el botón se encoja o se salga */
+  height: 40px; /* ✅ Altura reducida */
+  flex-shrink: 0;
 }
 
 .btn-logout:hover {
@@ -461,8 +442,8 @@ html, body, #app {
 }
 
 .logout-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   filter: none;
 }
@@ -482,68 +463,27 @@ html, body, #app {
    RESPONSIVE - TABLET
    ============================================ */
 @media (max-width: 1200px) {
-  .brand-title {
-    font-size: 9px;
-  }
-  
-  .brand-subtitle {
-    font-size: 8px;
-  }
-  
-  .nav-link {
-    padding: 8px 10px;
-    font-size: 13px;
-  }
-  
-  .nav-link span {
-    display: none;
-  }
-  
-  .nav-icon {
-    margin: 0;
-  }
+  .brand-title { font-size: 8px; }
+  .brand-subtitle { font-size: 7px; }
+  .nav-link { padding: 6px 8px; font-size: 12px; }
+  .nav-link span { display: none; }
+  .nav-icon { margin: 0; }
 }
 
 @media (max-width: 1024px) {
-  .user-info {
-    display: none;
-  }
-  
-  .user-menu {
-    padding: 6px;
-    max-width: none;
-  }
+  .user-info { display: none; }
+  .user-menu { padding: 4px; max-width: none; }
 }
 
 /* ============================================
    RESPONSIVE - MÓVIL (MENÚ HAMBURGUESA)
    ============================================ */
 @media (max-width: 768px) {
-  .nav-container {
-    padding: 0 16px;
-    height: 68px;
-  }
-  
-  .btn-hamburger {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .brand-logo {
-    width: 42px;
-    height: 42px;
-  }
-  
-  .brand-title {
-    font-size: 9px;
-    letter-spacing: 0.3px;
-  }
-  
-  .brand-subtitle {
-    font-size: 7.5px;
-    letter-spacing: 0.4px;
-  }
+  .nav-container { padding: 0 16px; height: 68px; }
+  .btn-hamburger { display: flex; align-items: center; justify-content: center; }
+  .brand-logo { width: 42px; height: 42px; }
+  .brand-title { font-size: 9px; letter-spacing: 0.3px; }
+  .brand-subtitle { font-size: 7.5px; letter-spacing: 0.4px; }
   
   .nav-links {
     position: fixed;
@@ -563,86 +503,23 @@ html, body, #app {
     border-top: 2px solid #2d7a55;
   }
   
-  .nav-links.menu-abierto {
-    transform: translateX(0);
-  }
-  
-  .nav-link {
-    padding: 14px 16px;
-    font-size: 15px;
-    border-radius: 8px;
-    text-align: left;
-  }
-  
-  .nav-link span {
-    display: inline;
-  }
-  
-  .nav-icon {
-    width: 22px;
-    height: 22px;
-  }
-  
-  .nav-link.router-link-active {
-    background: rgba(74, 222, 128, 0.2);
-    box-shadow: inset 4px 0 0 #4ade80;
-  }
-  
-  .nav-divider {
-    display: block;
-  }
-  
-  .user-menu {
-    margin: 8px 0;
-    padding: 12px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.1);
-    max-width: none;
-  }
-  
-  .user-info {
-    display: flex;
-  }
-  
-  .btn-logout {
-    margin: 8px 0 0 0;
-    padding: 14px;
-    width: 100%;
-    height: auto;
-    gap: 10px;
-    justify-content: center;
-  }
-  
-  .btn-logout::after {
-    content: 'Cerrar Sesión';
-    font-size: 14px;
-    font-weight: 700;
-  }
-  
-  .main-content {
-    padding: 16px;
-  }
+  .nav-links.menu-abierto { transform: translateX(0); }
+  .nav-link { padding: 14px 16px; font-size: 15px; border-radius: 8px; text-align: left; }
+  .nav-link span { display: inline; }
+  .nav-icon { width: 22px; height: 22px; }
+  .nav-link.router-link-active { background: rgba(74, 222, 128, 0.2); box-shadow: inset 4px 0 0 #4ade80; }
+  .nav-divider { display: block; }
+  .user-menu { margin: 8px 0; padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.1); max-width: none; }
+  .user-info { display: flex; }
+  .btn-logout { margin: 8px 0 0 0; padding: 14px; width: 100%; height: auto; gap: 10px; justify-content: center; }
+  .btn-logout::after { content: 'Cerrar Sesión'; font-size: 14px; font-weight: 700; }
+  .main-content { padding: 16px; }
 }
 
-/* ============================================
-   RESPONSIVE - MÓVIL PEQUEÑO
-   ============================================ */
 @media (max-width: 480px) {
-  .nav-container {
-    padding: 0 12px;
-  }
-  
-  .brand-text-container {
-    display: none;
-  }
-  
-  .brand-logo {
-    width: 44px;
-    height: 44px;
-  }
-  
-  .main-content {
-    padding: 12px;
-  }
+  .nav-container { padding: 0 12px; }
+  .brand-text-container { display: none; }
+  .brand-logo { width: 44px; height: 44px; }
+  .main-content { padding: 12px; }
 }
 </style>
