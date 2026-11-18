@@ -34,11 +34,16 @@
           
           <!-- ✅ EL ENLACE DE CREAR TAREA HA SIDO ELIMINADO DE AQUÍ -->
            <!-- ✅ NUEVO ENLACE DE COMPLETADAS -->
-          <router-link to="/completadas" class="nav-link" @click="menuAbierto = false">
-            <!-- Usamos un icono de check verde -->
-            <img src="/src/assets/icons/icon-tareacompletada.png" alt="" class="nav-icon" />
-            <span>Tareas Completadas</span>
-            </router-link>
+            <router-link 
+            to="/completadas" 
+            class="nav-link" 
+            @click="menuAbierto = false"
+            >
+           <img src="/src/assets/icons/icon-tareacompletadas.png" alt="" class="nav-icon" style="filter: grayscale(100%); opacity: 0.8;" />
+           <span>Tareas Completadas</span>
+           </router-link>
+            
+          
           
           <router-link 
             v-if="authStore.isSuperAdmin" 
