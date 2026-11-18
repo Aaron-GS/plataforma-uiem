@@ -9,6 +9,7 @@ import Tareas from '../views/Tareas.vue';
 import MisTareas from '../views/MisTareas.vue';
 import DetalleTarea from '../views/DetalleTarea.vue';
 import Calendario from '../views/Calendario.vue';
+import TareasCompletadas from '../views/TareasCompletadas.vue';
 
 const routes = [
   {
@@ -50,6 +51,12 @@ const routes = [
   name: 'Calendario',
   component: Calendario,
   meta: { requiresAuth: true, requiresSuperAdmin: true }
+},
+{
+  path: '/completadas',
+  name: 'TareasCompletadas',
+  component: TareasCompletadas,
+  meta: { requiresAuth: true }
 }
 ];
 

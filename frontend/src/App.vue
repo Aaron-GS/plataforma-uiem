@@ -40,6 +40,14 @@
             class="nav-link" 
             @click="menuAbierto = false"
           >
+          <!-- ✅ NUEVO ENLACE DE COMPLETADAS -->
+          <router-link to="/completadas" class="nav-link" @click="menuAbierto = false">
+            <!-- Usamos un icono de check verde -->
+            <img src="/src/assets/icons/icon-tareacompletada.png" alt="" class="nav-icon" />
+            <span>Completadas</span>
+            </router-link>
+
+        
             <img src="/src/assets/icons/icon-dashboard.png" alt="" class="nav-icon" />
             <span>Dashboard</span>
           </router-link>

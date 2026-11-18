@@ -169,7 +169,7 @@ const getPorcentaje = (tarea) => {
 const cargarTareas = async () => {
   loading.value = true;
   try {
-    const response = await api.get('/tareas');
+    const response = await api.get('/tareas?excluir_completadas=true');
     tareas.value = response.data.data || [];
   } catch (error) {
     console.error(error);

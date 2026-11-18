@@ -129,7 +129,7 @@ exports.crearTarea = async (req, res) => {
 // =============================================
 exports.obtenerTareas = async (req, res) => {
     try {
-        const { estado, area_id, prioridad, fecha_inicio, fecha_fin } = req.query;
+        const { estado, prioridad, excluir_completadas } = req.query;
         const usuario = req.usuario;
         let tareasIds = null;
 
@@ -150,9 +150,8 @@ exports.obtenerTareas = async (req, res) => {
         }
 
         let where = {};
-        if (tareasIds !== null) {
-            if (tareasIds.length === 0) return res.json({ success: true, count: 0, data: [] });
-            where.id = { [Op.in]: tareasIds };
+        if (excluir_completadas === 'true') {
+            where.estado = { [Op.notIn]: ['completada', 'rechazada'] };
         }
 
         if (estado) where.estado = estado;
