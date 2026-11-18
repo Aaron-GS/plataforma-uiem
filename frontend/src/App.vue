@@ -37,7 +37,7 @@
           <router-link to="/completadas" class="nav-link" @click="menuAbierto = false">
             <!-- Usamos un icono de check verde -->
             <img src="/src/assets/icons/icon-tareacompletada.png" alt="" class="nav-icon" />
-            <span>Completadas</span>
+            <span>Tareas Completadas</span>
             </router-link>
           
           <router-link 
