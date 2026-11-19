@@ -171,7 +171,6 @@ exports.obtenerTareas = async (req, res) => {
                     ]
                 }
             ],
-            // ✅ ORDENAR: Las más próximas a vencer primero (las nulas al final)
             order: [
                 ['fecha_limite', 'ASC'],
                 ['creada_en', 'DESC']
@@ -233,35 +232,50 @@ exports.obtenerTareaPorId = async (req, res) => {
 };
 
 // =============================================
-// ACTUALIZAR TAREA (Con notificación de validación)
+// ACTUALIZAR TAREA (EDICIÓN Y VALIDACIÓN)
 // =============================================
 exports.actualizarTarea = async (req, res) => {
     try {
         const { id } = req.params;
-        const { estado, prioridad, fecha_limite, descripcion } = req.body;
+        const { titulo, descripcion, prioridad, fecha_limite, estado } = req.body;
         const usuario = req.usuario;
 
         const tarea = await Tarea.findByPk(id);
         if (!tarea) return res.status(404).json({ success: false, message: 'Tarea no encontrada' });
 
+        // Solo admin o creador pueden editar
+        if (usuario.rol !== 'superadmin' && tarea.creada_por !== usuario.id) {
+            return res.status(403).json({ success: false, message: 'No tienes permiso para editar esta tarea' });
+        }
+
         const datosPrevios = tarea.toJSON();
 
-        if (estado) tarea.estado = estado;
+        if (titulo) tarea.titulo = titulo.trim();
+        if (descripcion !== undefined) tarea.descripcion = descripcion;
         if (prioridad) tarea.prioridad = prioridad;
-        if (fecha_limite) tarea.fecha_limite = fecha_limite;
-        if (descripcion) tarea.descripcion = descripcion;
+        if (fecha_limite !== undefined) tarea.fecha_limite = fecha_limite;
+        if (estado) tarea.estado = estado;
 
         if (estado === 'completada') tarea.fecha_completada = new Date();
         await tarea.save();
 
+        // Si se actualizó la fecha, actualizar también en tareas_areas
+        if (fecha_limite !== undefined) {
+            await TareaArea.update(
+                { fecha_limite: fecha_limite },
+                { where: { tarea_id: id } }
+            );
+        }
+
         await HistorialTarea.create({
             tarea_id: tarea.id,
             usuario_id: usuario.id,
-            accion: 'cambiado_estado',
-            descripcion: `Tarea actualizada a: ${estado}`,
+            accion: 'editada',
+            descripcion: `Tarea editada por ${usuario.nombre}`,
             datos_previos: datosPrevios
         });
 
+        // Notificar si pasa a por_validar
         if (estado === 'por_validar') {
             await Notificacion.create({
                 usuario_id: tarea.creada_por,
@@ -277,9 +291,10 @@ exports.actualizarTarea = async (req, res) => {
             );
         }
 
-        res.json({ success: true, data: tarea, message: 'Tarea actualizada exitosamente' });
+        res.json({ success: true, data: tarea, message: 'Tarea actualizada correctamente' });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error al actualizar tarea', error: error.message });
+        console.error('Error al actualizar tarea:', error);
+        res.status(500).json({ success: false, message: 'Error al actualizar la tarea', error: error.message });
     }
 };
 
@@ -339,9 +354,8 @@ exports.actualizarEstadoArea = async (req, res) => {
         const tareaArea = await TareaArea.findOne({ where: { tarea_id: tareaId, area_id: areaId } });
         if (!tareaArea) return res.status(404).json({ success: false, message: 'No encontrado' });
 
-        // ✅ VALIDACIÓN: Si la tarea está vencida, no dejar avanzar
+        // Validación de vencimiento
         if (tareaArea.fecha_limite && new Date(tareaArea.fecha_limite) < new Date()) {
-            // Permitir solo si no se intenta avanzar a completada o por_validar
             if (estado === 'por_validar' || estado === 'completada') {
                 return res.status(400).json({ 
                     success: false, 
@@ -353,7 +367,7 @@ exports.actualizarEstadoArea = async (req, res) => {
         if (estado) tareaArea.estado = estado;
         await tareaArea.save();
 
-        // ✅ Lógica de completar tarea general
+        // Lógica de completar tarea general
         const todasLasAreas = await TareaArea.findAll({ where: { tarea_id: tareaId } });
         const totalAreas = todasLasAreas.length;
         const areasCompletadas = todasLasAreas.filter(a => a.estado === 'completada').length;

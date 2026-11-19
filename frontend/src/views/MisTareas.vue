@@ -78,7 +78,6 @@
         <div class="tarea-header">
           <h3>{{ tarea.titulo }}</h3>
           <div class="estados-container">
-            <!-- ✅ Etiqueta de Vencida -->
             <span v-if="estaVencida(tarea)" class="estado vencida">VENCIDA</span>
             <span class="estado" :class="tarea.estado">{{ getEstadoLabel(tarea.estado) }}</span>
           </div>
@@ -103,9 +102,8 @@
           </div>
         </div>
 
-        <!-- ✅ ETIQUETAS ORGANIZADAS: PRIORIDAD A LA IZQ, FECHA Y HORA A LA DER -->
+        <!-- ETIQUETAS ORGANIZADAS -->
         <div class="tarea-meta">
-          <!-- Prioridad a la izquierda -->
           <div class="meta-item">
             <span class="meta-label">Prioridad:</span>
             <span class="prioridad" :class="tarea.prioridad">
@@ -114,7 +112,6 @@
             </span>
           </div>
 
-          <!-- Fecha y Hora en columna a la derecha -->
           <div v-if="tarea.fecha_limite" class="meta-fecha-hora">
             <div class="meta-item">
               <span class="meta-label">Fecha Límite:</span>
@@ -138,10 +135,57 @@
             <img src="/src/assets/icons/icon-area.png" alt="" class="meta-icon-small" />
             {{ tarea.areas_asignadas?.length || 0 }} área(s)
           </span>
-          <span class="btn-ver">
-            <img src="/src/assets/icons/icon-ver.png" alt="" class="btn-icon-small" />
-            Ver Detalle
-          </span>
+          <div class="footer-botones">
+            <!-- ✅ BOTÓN DE EDITAR (Solo Admin) -->
+            <button 
+              v-if="authStore.isSuperAdmin" 
+              @click.stop="abrirModalEditar(tarea)" 
+              class="btn-editar-tarea"
+            >
+              ✏️ Editar
+            </button>
+            <span class="btn-ver">
+              <img src="/src/assets/icons/icon-ver.png" alt="" class="btn-icon-small" />
+              Ver Detalle
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ MODAL DE EDICIÓN -->
+    <div v-if="modalEditarAbierto" class="modal-overlay" @click.self="cerrarModalEditar">
+      <div class="modal-content">
+        <h2>Editar Tarea</h2>
+        
+        <div class="field">
+          <label>Título *</label>
+          <input v-model="tareaEditando.titulo" type="text" required />
+        </div>
+
+        <div class="field">
+          <label>Descripción</label>
+          <textarea v-model="tareaEditando.descripcion" rows="3"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label>Prioridad</label>
+            <select v-model="tareaEditando.prioridad">
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Fecha Límite</label>
+            <input v-model="tareaEditando.fecha_limite" type="date" />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button @click="cerrarModalEditar" class="btn-cancel">Cancelar</button>
+          <button @click="guardarCambios" class="btn-save">Guardar Cambios</button>
         </div>
       </div>
     </div>
@@ -161,6 +205,10 @@ const authStore = useAuthStore();
 const tareas = ref([]);
 const loading = ref(true);
 const filtros = ref({ busqueda: '', estado: '', prioridad: '' });
+
+// ✅ Variables para el modal de edición
+const modalEditarAbierto = ref(false);
+const tareaEditando = ref({ id: null, titulo: '', descripcion: '', prioridad: '', fecha_limite: '' });
 
 const tareasFiltradas = computed(() => {
   let resultado = tareas.value;
@@ -213,7 +261,6 @@ const verDetalle = (id) => router.push(`/tareas/${id}`);
 const irACrearTarea = () => router.push('/tareas');
 const getEstadoLabel = (e) => ({ 'pendiente': 'Pendiente', 'en_proceso': 'En Proceso', 'por_validar': 'Por Validar', 'completada': 'Completada', 'rechazada': 'Rechazada' }[e] || e);
 
-// ✅ Funciones para separar la fecha y la hora
 const formatDateOnly = (d) => {
   if (!d) return 'Sin fecha';
   return new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -221,12 +268,46 @@ const formatDateOnly = (d) => {
 
 const formatTimeOnly = (d) => {
   if (!d) return 'Sin hora';
-  const date = new Date(d);
-  return date.toLocaleTimeString('es-MX', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: true 
-  });
+  return new Date(d).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+};
+
+// ✅ Funciones para el modal
+const abrirModalEditar = (tarea) => {
+  tareaEditando.value = {
+    id: tarea.id,
+    titulo: tarea.titulo,
+    descripcion: tarea.descripcion || '',
+    prioridad: tarea.prioridad,
+    fecha_limite: tarea.fecha_limite ? new Date(tarea.fecha_limite).toISOString().split('T')[0] : ''
+  };
+  modalEditarAbierto.value = true;
+};
+
+const cerrarModalEditar = () => {
+  modalEditarAbierto.value = false;
+};
+
+const guardarCambios = async () => {
+  if (!tareaEditando.value.titulo.trim()) {
+    alert('El título es obligatorio');
+    return;
+  }
+
+  try {
+    await api.put(`/tareas/${tareaEditando.value.id}`, {
+      titulo: tareaEditando.value.titulo,
+      descripcion: tareaEditando.value.descripcion,
+      prioridad: tareaEditando.value.prioridad,
+      fecha_limite: tareaEditando.value.fecha_limite || null
+    });
+    
+    alert('✅ Tarea actualizada correctamente');
+    cerrarModalEditar();
+    await cargarTareas();
+  } catch (error) {
+    console.error('Error al actualizar:', error);
+    alert('❌ Error al guardar los cambios');
+  }
 };
 
 onMounted(() => cargarTareas());
@@ -303,7 +384,7 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .progreso-fill { height: 100%; background: #1a5c40; border-radius: 3px; transition: width 0.5s; }
 .progreso-fill.completo { background: #4caf50; }
 
-/* ✅ CONTENEDOR PRINCIPAL DE LA FILA (Prioridad Izq, Fecha y Hora Der) */
+/* ✅ CONTENEDOR PRINCIPAL DE LA FILA */
 .tarea-meta { 
   display: flex; 
   justify-content: space-between; 
@@ -312,7 +393,7 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
   font-size: 12px; 
 }
 
-/* ✅ COLUMNA DE FECHA Y HORA (Alineada a la derecha) */
+/* ✅ COLUMNA DE FECHA Y HORA */
 .meta-fecha-hora {
   display: flex;
   flex-direction: column;
@@ -334,7 +415,131 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .meta-icon-small { width: 12px; height: 12px; margin-right: 4px; opacity: 0.7; }
 .tarea-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #e0ebe5; }
 .area { font-size: 12px; color: #888; }
+
+.footer-botones {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ✅ Estilo del botón de editar */
+.btn-editar-tarea {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ff9800;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-editar-tarea:hover {
+  background: #ff9800;
+  color: white;
+}
+
 .btn-ver { display: inline-flex; align-items: center; gap: 4px; padding: 6px 16px; background: #e0ebe5; color: #0d3d2a; border-radius: 6px; font-size: 13px; font-weight: 700; transition: all 0.2s; }
 .tarea-card:hover .btn-ver { background: #1a5c40; color: white; }
 .loading, .empty-state { text-align: center; padding: 60px 20px; color: #888; font-size: 15px; }
+
+/* ✅ ESTILOS DEL MODAL */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal-content h2 {
+  color: #0d3d2a;
+  margin-bottom: 20px;
+  font-weight: 800;
+}
+
+.modal-content .field {
+  margin-bottom: 16px;
+}
+
+.modal-content .field label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #0d3d2a;
+}
+
+.modal-content .field input,
+.modal-content .field select,
+.modal-content .field textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e0ebe5;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.modal-content .field input:focus,
+.modal-content .field select:focus,
+.modal-content .field textarea:focus {
+  outline: none;
+  border-color: #1a5c40;
+}
+
+.modal-content .form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.modal-content .form-row .field {
+  flex: 1;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-cancel {
+  padding: 10px 20px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-save {
+  padding: 10px 20px;
+  background: #1a5c40;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-save:hover {
+  background: #0d3d2a;
+}
 </style>
