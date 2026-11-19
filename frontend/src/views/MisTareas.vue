@@ -103,8 +103,9 @@
           </div>
         </div>
 
-        <!-- ✅ ETIQUETAS SEPARADAS DE PRIORIDAD, FECHA Y HORA -->
+        <!-- ✅ ETIQUETAS ORGANIZADAS: PRIORIDAD A LA IZQ, FECHA Y HORA A LA DER -->
         <div class="tarea-meta">
+          <!-- Prioridad a la izquierda -->
           <div class="meta-item">
             <span class="meta-label">Prioridad:</span>
             <span class="prioridad" :class="tarea.prioridad">
@@ -113,20 +114,22 @@
             </span>
           </div>
 
-          <div v-if="tarea.fecha_limite" class="meta-item">
-            <span class="meta-label">Fecha Límite:</span>
-            <span class="fecha" :class="{ 'texto-vencido': estaVencida(tarea) }">
-              <img src="/src/assets/icons/icon-fecha.png" alt="" class="meta-icon" />
-              {{ formatDateOnly(tarea.fecha_limite) }}
-            </span>
-          </div>
-
-          <div v-if="tarea.fecha_limite" class="meta-item">
-            <span class="meta-label">Hora Límite:</span>
-            <span class="fecha" :class="{ 'texto-vencido': estaVencida(tarea) }">
-              <img src="/src/assets/icons/icon-fecha.png" alt="" class="meta-icon" style="filter: grayscale(100%); opacity: 0.7;" />
-              {{ formatTimeOnly(tarea.fecha_limite) }}
-            </span>
+          <!-- Fecha y Hora en columna a la derecha -->
+          <div v-if="tarea.fecha_limite" class="meta-fecha-hora">
+            <div class="meta-item">
+              <span class="meta-label">Fecha Límite:</span>
+              <span class="fecha" :class="{ 'texto-vencido': estaVencida(tarea) }">
+                <img src="/src/assets/icons/icon-fecha.png" alt="" class="meta-icon" />
+                {{ formatDateOnly(tarea.fecha_limite) }}
+              </span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Hora Límite:</span>
+              <span class="fecha" :class="{ 'texto-vencido': estaVencida(tarea) }">
+                <img src="/src/assets/icons/icon-fecha.png" alt="" class="meta-icon" style="filter: grayscale(100%); opacity: 0.7;" />
+                {{ formatTimeOnly(tarea.fecha_limite) }}
+              </span>
+            </div>
           </div>
         </div>
         
@@ -295,15 +298,23 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .progreso-fill { height: 100%; background: #1a5c40; border-radius: 3px; transition: width 0.5s; }
 .progreso-fill.completo { background: #4caf50; }
 
-/* ✅ ESTILOS PARA LAS ETIQUETAS DE TEXTO */
-.tarea-meta {
-display: flex;
-flex-direction: column;
-align-items: flex-start;
-gap: 6px;
-margin-bottom: 16px;
-font-size: 12px; 
+/* ✅ CONTENEDOR PRINCIPAL DE LA FILA (Prioridad Izq, Fecha y Hora Der) */
+.tarea-meta { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: flex-start;
+  margin-bottom: 16px; 
+  font-size: 12px; 
 }
+
+/* ✅ COLUMNA DE FECHA Y HORA (Alineada a la derecha) */
+.meta-fecha-hora {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end; 
+}
+
 .meta-item { display: flex; align-items: center; gap: 4px; }
 .meta-label { font-weight: 700; color: #666; text-transform: uppercase; font-size: 11px; }
 .prioridad, .fecha { display: inline-flex; align-items: center; }
