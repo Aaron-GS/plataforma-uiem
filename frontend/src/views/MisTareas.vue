@@ -221,7 +221,12 @@ const formatDateOnly = (d) => {
 
 const formatTimeOnly = (d) => {
   if (!d) return 'Sin hora';
-  return new Date(d).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  const date = new Date(d);
+  return date.toLocaleTimeString('es-MX', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: true 
+  });
 };
 
 onMounted(() => cargarTareas());

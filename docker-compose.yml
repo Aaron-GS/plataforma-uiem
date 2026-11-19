@@ -8,6 +8,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword123
       MYSQL_DATABASE: plataforma_uiem
+      TZ: America/Mexico_City # NUEVO: Zona horaria
     ports:
       - "3306:3306"
     volumes:
@@ -29,6 +30,7 @@ services:
       - DB_PORT=3306
       - JWT_SECRET=uiem_clave_secreta_2026_super_segura
       - PORT=3000
+       - TZ=America/Mexico_City  # NUEVO: Zona horaria
       - FRONTEND_URL=http://172.16.100.30:8080
     depends_on:
       - db
