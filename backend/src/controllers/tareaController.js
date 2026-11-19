@@ -234,11 +234,16 @@ exports.obtenerTareaPorId = async (req, res) => {
 // =============================================
 // ACTUALIZAR TAREA (EDICIÓN COMPLETA: DATOS Y ÁREAS)
 // =============================================
+// backend/src/controllers/tareaController.js
+
 exports.actualizarTarea = async (req, res) => {
     try {
         const { id } = req.params;
         const { titulo, descripcion, prioridad, fecha_limite, estado, areas_asignadas } = req.body;
         const usuario = req.usuario;
+
+        console.log('📝 Editando tarea ID:', id);
+        console.log('📝 Datos recibidos:', req.body);
 
         const tarea = await Tarea.findByPk(id);
         if (!tarea) return res.status(404).json({ success: false, message: 'Tarea no encontrada' });
@@ -252,21 +257,33 @@ exports.actualizarTarea = async (req, res) => {
         if (titulo) tarea.titulo = titulo.trim();
         if (descripcion !== undefined) tarea.descripcion = descripcion;
         if (prioridad) tarea.prioridad = prioridad;
-        if (fecha_limite !== undefined) tarea.fecha_limite = fecha_limite;
-        if (estado) tarea.estado = estado;
+        
+        // ✅ Limpiar y formatear la fecha para MySQL
+        if (fecha_limite !== undefined) {
+            if (fecha_limite) {
+                // Reemplazar la 'T' por un espacio y quitar la 'Z' si viene con formato ISO
+                const fechaLimpia = fecha_limite.replace('T', ' ').replace('Z', '').split('.')[0];
+                tarea.fecha_limite = fechaLimpia;
+            } else {
+                tarea.fecha_limite = null;
+            }
+        }
 
+        if (estado) tarea.estado = estado;
         if (estado === 'completada') tarea.fecha_completada = new Date();
+
         await tarea.save();
 
-        // Actualizar fechas en áreas existentes
+        // Actualizar fechas en las áreas existentes
         if (fecha_limite !== undefined) {
+            const fechaParaAreas = fecha_limite ? fecha_limite.replace('T', ' ').replace('Z', '').split('.')[0] : null;
             await TareaArea.update(
-                { fecha_limite: fecha_limite },
+                { fecha_limite: fechaParaAreas },
                 { where: { tarea_id: id } }
             );
         }
 
-        // Actualizar áreas asignadas (agregar nuevas o eliminar quitadas)
+        // Actualizar áreas asignadas
         if (areas_asignadas && Array.isArray(areas_asignadas)) {
             const areasActuales = await TareaArea.findAll({ where: { tarea_id: id } });
             const idsActuales = areasActuales.map(a => a.area_id);
@@ -287,7 +304,7 @@ exports.actualizarTarea = async (req, res) => {
                         area_id: parseInt(nuevaArea.area_id),
                         asignada_a: nuevaArea.asignada_a ? parseInt(nuevaArea.asignada_a) : null,
                         estado: 'pendiente',
-                        fecha_limite: fecha_limite || null
+                        fecha_limite: tarea.fecha_limite
                     });
                 }
             }
@@ -302,9 +319,14 @@ exports.actualizarTarea = async (req, res) => {
         });
 
         res.json({ success: true, data: tarea, message: 'Tarea actualizada correctamente' });
+
     } catch (error) {
-        console.error('Error al editar tarea:', error);
-        res.status(500).json({ success: false, message: 'Error al editar la tarea', error: error.message });
+        console.error('❌ Error al editar tarea:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error al editar la tarea', 
+            error: error.message 
+        });
     }
 };
 

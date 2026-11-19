@@ -329,14 +329,16 @@ const guardarCambios = async () => {
     let fechaCompleta = null;
     if (tareaEditando.value.fecha_limite) {
       const hora = tareaEditando.value.hora_limite || '23:59';
-      fechaCompleta = `${tareaEditando.value.fecha_limite}T${hora}:00`;
+      // El backend se encargará de limpiar el formato
+      fechaCompleta = `${tareaEditando.value.fecha_limite}T${hora}:00`; 
     }
 
     const areasAsignadas = tareaEditando.value.areas_ids.map(areaId => ({
       area_id: areaId,
-      asignada_a: null,
-      fecha_limite: fechaCompleta
+      asignada_a: null
     }));
+
+    console.log('Enviando:', { fechaCompleta, areasAsignadas });
 
     await api.put(`/tareas/${tareaEditando.value.id}`, {
       titulo: tareaEditando.value.titulo,
@@ -351,7 +353,9 @@ const guardarCambios = async () => {
     await cargarTareas();
   } catch (error) {
     console.error('Error al actualizar:', error);
-    alert('❌ Error al guardar los cambios');
+    // Mostrar el error exacto del backend para depurar
+    const msjError = error.response?.data?.error || error.response?.data?.message || error.message;
+    alert(`❌ Error: ${msjError}`);
   }
 };
 
