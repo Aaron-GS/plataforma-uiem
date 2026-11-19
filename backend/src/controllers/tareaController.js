@@ -19,7 +19,6 @@ exports.crearTarea = async (req, res) => {
             return res.status(400).json({ success: false, message: 'El título es obligatorio' });
         }
 
-        // Determinar las áreas (soporta múltiples modos)
         let areasFinales = [];
         
         if (areas_asignadas && Array.isArray(areas_asignadas) && areas_asignadas.length > 0) {
@@ -51,7 +50,6 @@ exports.crearTarea = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Una o más áreas no existen' });
         }
 
-        // 1. Crear tarea principal
         const nuevaTarea = await Tarea.create({
             titulo: titulo.trim(),
             descripcion: descripcion || null,
@@ -64,7 +62,6 @@ exports.crearTarea = async (req, res) => {
             estado: 'pendiente'
         });
 
-        // 2. Crear registros en tareas_areas
         for (const area of areasFinales) {
             await TareaArea.create({
                 tarea_id: nuevaTarea.id,
@@ -75,7 +72,6 @@ exports.crearTarea = async (req, res) => {
             });
         }
 
-        // 3. Historial
         await HistorialTarea.create({
             tarea_id: nuevaTarea.id,
             usuario_id: usuario_id,
@@ -83,7 +79,6 @@ exports.crearTarea = async (req, res) => {
             descripcion: `Tarea "${titulo}" creada para ${areasFinales.length} área(s)`
         });
 
-        // 4. Notificaciones
         const usuariosNotificados = new Set();
         for (const area of areasFinales) {
             if (area.asignada_a && !usuariosNotificados.has(area.asignada_a)) {
@@ -125,7 +120,7 @@ exports.crearTarea = async (req, res) => {
 };
 
 // =============================================
-// OBTENER TAREAS (VISIBILIDAD POR ROL)
+// OBTENER TAREAS (CON ORDEN POR FECHA Y FILTROS)
 // =============================================
 exports.obtenerTareas = async (req, res) => {
     try {
@@ -150,6 +145,11 @@ exports.obtenerTareas = async (req, res) => {
         }
 
         let where = {};
+        if (tareasIds !== null) {
+            if (tareasIds.length === 0) return res.json({ success: true, count: 0, data: [] });
+            where.id = { [Op.in]: tareasIds };
+        }
+
         if (excluir_completadas === 'true') {
             where.estado = { [Op.notIn]: ['completada', 'rechazada'] };
         }
@@ -171,7 +171,11 @@ exports.obtenerTareas = async (req, res) => {
                     ]
                 }
             ],
-            order: [['creada_en', 'DESC']]
+            // ✅ ORDENAR: Las más próximas a vencer primero (las nulas al final)
+            order: [
+                ['fecha_limite', 'ASC'],
+                ['creada_en', 'DESC']
+            ]
         });
 
         res.json({ success: true, count: tareas.length, data: tareas });
@@ -231,9 +235,6 @@ exports.obtenerTareaPorId = async (req, res) => {
 // =============================================
 // ACTUALIZAR TAREA (Con notificación de validación)
 // =============================================
-// =============================================
-// ACTUALIZAR TAREA (Lógica de validación general)
-// =============================================
 exports.actualizarTarea = async (req, res) => {
     try {
         const { id } = req.params;
@@ -250,11 +251,9 @@ exports.actualizarTarea = async (req, res) => {
         if (fecha_limite) tarea.fecha_limite = fecha_limite;
         if (descripcion) tarea.descripcion = descripcion;
 
-        // Si el estado general cambia a completada, actualizamos la fecha
         if (estado === 'completada') tarea.fecha_completada = new Date();
         await tarea.save();
 
-        // Historial
         await HistorialTarea.create({
             tarea_id: tarea.id,
             usuario_id: usuario.id,
@@ -263,7 +262,6 @@ exports.actualizarTarea = async (req, res) => {
             datos_previos: datosPrevios
         });
 
-        // 🔔 NOTIFICACIÓN: Si pasa a "por_validar", avisar al creador
         if (estado === 'por_validar') {
             await Notificacion.create({
                 usuario_id: tarea.creada_por,
@@ -331,10 +329,7 @@ exports.reasignarTarea = async (req, res) => {
 };
 
 // =============================================
-// ACTUALIZAR ESTADO DE UN ÁREA ESPECÍFICA
-// =============================================
-// =============================================
-// ACTUALIZAR ESTADO DE UN ÁREA ESPECÍFICA
+// ACTUALIZAR ESTADO DE UN ÁREA ESPECÍFICA (CON VALIDACIÓN DE VENCIMIENTO)
 // =============================================
 exports.actualizarEstadoArea = async (req, res) => {
     try {
@@ -344,16 +339,25 @@ exports.actualizarEstadoArea = async (req, res) => {
         const tareaArea = await TareaArea.findOne({ where: { tarea_id: tareaId, area_id: areaId } });
         if (!tareaArea) return res.status(404).json({ success: false, message: 'No encontrado' });
 
+        // ✅ VALIDACIÓN: Si la tarea está vencida, no dejar avanzar
+        if (tareaArea.fecha_limite && new Date(tareaArea.fecha_limite) < new Date()) {
+            // Permitir solo si no se intenta avanzar a completada o por_validar
+            if (estado === 'por_validar' || estado === 'completada') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: '❌ La fecha límite ha expirado. No puedes completar esta tarea.' 
+                });
+            }
+        }
+
         if (estado) tareaArea.estado = estado;
         await tareaArea.save();
 
-        // ✅ LÓGICA DE NEGOCIO: 
-        // Revisar si TODAS las áreas de esta tarea ya están "completadas"
+        // ✅ Lógica de completar tarea general
         const todasLasAreas = await TareaArea.findAll({ where: { tarea_id: tareaId } });
         const totalAreas = todasLasAreas.length;
         const areasCompletadas = todasLasAreas.filter(a => a.estado === 'completada').length;
 
-        // Si todas las áreas están completadas, actualizamos la tarea principal
         if (totalAreas > 0 && areasCompletadas === totalAreas) {
             const tareaGeneral = await Tarea.findByPk(tareaId);
             if (tareaGeneral && tareaGeneral.estado !== 'completada') {
@@ -361,7 +365,6 @@ exports.actualizarEstadoArea = async (req, res) => {
                 tareaGeneral.fecha_completada = new Date();
                 await tareaGeneral.save();
                 
-                // Registrar en historial que se completó sola porque todas las áreas terminaron
                 await HistorialTarea.create({
                     tarea_id: tareaId,
                     usuario_id: req.usuario.id,
@@ -370,8 +373,6 @@ exports.actualizarEstadoArea = async (req, res) => {
                 });
             }
         } else {
-            // Si aún faltan áreas, la tarea general se queda "En Proceso" o "Por Validar" 
-            // (dependiendo de cómo quieras manejarlo, aquí la regresamos a 'en_proceso' si estaba completada)
             const tareaGeneral = await Tarea.findByPk(tareaId);
             if (tareaGeneral && tareaGeneral.estado === 'completada') {
                 tareaGeneral.estado = 'en_proceso';

@@ -296,7 +296,14 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .progreso-fill.completo { background: #4caf50; }
 
 /* ✅ ESTILOS PARA LAS ETIQUETAS DE TEXTO */
-.tarea-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; font-size: 12px; }
+.tarea-meta {
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+gap: 6px;
+margin-bottom: 16px;
+font-size: 12px; 
+}
 .meta-item { display: flex; align-items: center; gap: 4px; }
 .meta-label { font-weight: 700; color: #666; text-transform: uppercase; font-size: 11px; }
 .prioridad, .fecha { display: inline-flex; align-items: center; }
