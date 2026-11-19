@@ -62,18 +62,34 @@
           </div>
         </div>
 
+        <!-- ✅ ETIQUETAS ORGANIZADAS: PRIORIDAD A LA IZQ, FECHA Y HORA A LA DER -->
         <div class="tarea-meta">
-          <span class="meta-label">Prioridad:</span>
-          <span class="prioridad" :class="tarea.prioridad">
-            <img src="/src/assets/icons/icon-prioridad.png" alt="" class="meta-icon" />
-            {{ tarea.prioridad.toUpperCase() }}
-          </span>
-          
-          <span v-if="tarea.fecha_limite" class="meta-label" style="margin-left: 8px;">Fecha Límite:</span>
-          <span v-if="tarea.fecha_limite" class="fecha">
-            <img src="/src/assets/icons/icon-fecha.png" alt="" class="meta-icon" />
-            {{ formatDate(tarea.fecha_limite) }}
-          </span>
+          <!-- Prioridad a la izquierda -->
+          <div class="meta-item">
+            <span class="meta-label">Prioridad:</span>
+            <span class="prioridad" :class="tarea.prioridad">
+              <img src="/src/assets/icons/icon-prioridad.png" alt="" class="meta-icon" />
+              {{ tarea.prioridad.toUpperCase() }}
+            </span>
+          </div>
+
+          <!-- Fecha y Hora en columna a la derecha -->
+          <div v-if="tarea.fecha_limite" class="meta-fecha-hora">
+            <div class="meta-item">
+              <span class="meta-label">Fecha Límite:</span>
+              <span class="fecha">
+                <img src="/src/assets/icons/icon-fecha.png" alt="" class="meta-icon" />
+                {{ formatDateOnly(tarea.fecha_limite) }}
+              </span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Hora Límite:</span>
+              <span class="fecha">
+                <img src="/src/assets/icons/icon-fecha.png" alt="" class="meta-icon" style="filter: grayscale(100%); opacity: 0.7;" />
+                {{ formatTimeOnly(tarea.fecha_limite) }}
+              </span>
+            </div>
+          </div>
         </div>
         
         <div class="tarea-footer">
@@ -128,7 +144,6 @@ const getPorcentaje = (tarea) => {
 const cargarTareasCompletadas = async () => {
   loading.value = true;
   try {
-    // Pedimos al backend solo las completadas
     const response = await api.get('/tareas?estado=completada');
     tareas.value = response.data.data || [];
   } catch (error) {
@@ -139,14 +154,24 @@ const cargarTareasCompletadas = async () => {
 };
 
 const verDetalle = (id) => router.push(`/tareas/${id}`);
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('es-MX') : 'Sin fecha';
+
+// ✅ Funciones para separar fecha y hora
+const formatDateOnly = (d) => {
+  if (!d) return 'Sin fecha';
+  return new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const formatTimeOnly = (d) => {
+  if (!d) return 'Sin hora';
+  return new Date(d).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+};
 
 onMounted(() => cargarTareasCompletadas());
 </script>
 
 <style scoped>
-/* Reutilizamos los mismos estilos que en MisTareas.vue */
 .page-container { max-width: 1300px; margin: 0 auto; }
+
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 3px solid #1a5c40; gap: 16px; flex-wrap: wrap; }
 .header-title h1 { font-size: 28px; color: #0d3d2a; font-weight: 800; display: flex; align-items: center; gap: 10px; margin: 0; }
 .title-icon { width: 32px; height: 32px; object-fit: contain; }
@@ -177,14 +202,32 @@ onMounted(() => cargarTareasCompletadas());
 .progreso-fill { height: 100%; background: #1a5c40; border-radius: 3px; transition: width 0.5s; }
 .progreso-fill.completo { background: #4caf50; }
 
-.tarea-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; font-size: 12px; }
+/* ✅ CONTENEDOR PRINCIPAL DE LA FILA (Prioridad Izq, Fecha y Hora Der) */
+.tarea-meta { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: flex-start;
+  margin-bottom: 16px; 
+  font-size: 12px; 
+}
+
+/* ✅ COLUMNA DE FECHA Y HORA (Alineada a la derecha) */
+.meta-fecha-hora {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end; 
+}
+
+.meta-item { display: flex; align-items: center; gap: 4px; }
 .meta-label { font-weight: 700; color: #666; text-transform: uppercase; font-size: 11px; }
-.prioridad, .fecha, .area { display: inline-flex; align-items: center; }
+.prioridad, .fecha { display: inline-flex; align-items: center; }
 .prioridad { padding: 2px 8px; border-radius: 4px; font-weight: 700; }
 .prioridad.baja { background: #e0ebe5; color: #0d3d2a; }
 .prioridad.media { background: #fff3e0; color: #e65100; }
 .prioridad.alta { background: #ffebee; color: #b71c1c; }
 .fecha { color: #888; font-weight: 600; }
+
 .meta-icon { width: 14px; height: 14px; margin-right: 4px; }
 .meta-icon-small { width: 12px; height: 12px; margin-right: 4px; opacity: 0.7; }
 .tarea-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #e0ebe5; }
