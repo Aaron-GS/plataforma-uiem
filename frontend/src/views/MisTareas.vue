@@ -155,20 +155,20 @@
 
     <!-- ✅ MODAL DE EDICIÓN -->
     <div v-if="modalEditarAbierto" class="modal-overlay" @click.self="cerrarModalEditar">
-      <div class="modal-content">
+      <div class="modal-content modal-large">
         <h2>Editar Tarea</h2>
         
-        <div class="field">
-          <label>Título *</label>
-          <input v-model="tareaEditando.titulo" type="text" required />
-        </div>
+        <div class="form-grid">
+          <div class="field full-width">
+            <label>Título *</label>
+            <input v-model="tareaEditando.titulo" type="text" required />
+          </div>
 
-        <div class="field">
-          <label>Descripción</label>
-          <textarea v-model="tareaEditando.descripcion" rows="3"></textarea>
-        </div>
+          <div class="field full-width">
+            <label>Descripción</label>
+            <textarea v-model="tareaEditando.descripcion" rows="2"></textarea>
+          </div>
 
-        <div class="form-row">
           <div class="field">
             <label>Prioridad</label>
             <select v-model="tareaEditando.prioridad">
@@ -177,9 +177,28 @@
               <option value="alta">Alta</option>
             </select>
           </div>
+          
           <div class="field">
-            <label>Fecha Límite</label>
-            <input v-model="tareaEditando.fecha_limite" type="date" />
+            <label>Fecha y Hora Límite</label>
+            <div class="date-input-group">
+              <input v-model="tareaEditando.fecha_limite" type="date" class="input-date" />
+              <input v-model="tareaEditando.hora_limite" type="time" class="input-time" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ✅ SECCIÓN DE ÁREAS -->
+        <div class="edit-areas-section">
+          <label>Áreas Asignadas ({{ tareaEditando.areas_ids.length }} seleccionadas)</label>
+          <div class="areas-checkbox-list">
+            <label v-for="area in todasLasAreas" :key="area.id" class="area-checkbox-item">
+              <input 
+                type="checkbox" 
+                :value="area.id" 
+                v-model="tareaEditando.areas_ids"
+              />
+              {{ area.nombre }}
+            </label>
           </div>
         </div>
 
@@ -205,10 +224,11 @@ const authStore = useAuthStore();
 const tareas = ref([]);
 const loading = ref(true);
 const filtros = ref({ busqueda: '', estado: '', prioridad: '' });
+const todasLasAreas = ref([]);
 
 // ✅ Variables para el modal de edición
 const modalEditarAbierto = ref(false);
-const tareaEditando = ref({ id: null, titulo: '', descripcion: '', prioridad: '', fecha_limite: '' });
+const tareaEditando = ref({ id: null, titulo: '', descripcion: '', prioridad: '', fecha_limite: '', hora_limite: '', areas_ids: [] });
 
 const tareasFiltradas = computed(() => {
   let resultado = tareas.value;
@@ -271,14 +291,26 @@ const formatTimeOnly = (d) => {
   return new Date(d).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 };
 
-// ✅ Funciones para el modal
+// ✅ Funciones del modal
 const abrirModalEditar = (tarea) => {
+  let fechaStr = '';
+  let horaStr = '';
+  if (tarea.fecha_limite) {
+    const dateObj = new Date(tarea.fecha_limite);
+    fechaStr = dateObj.toISOString().split('T')[0];
+    horaStr = dateObj.toTimeString().slice(0, 5);
+  }
+
+  const areasIds = tarea.areas_asignadas ? tarea.areas_asignadas.map(a => a.area_id) : [];
+
   tareaEditando.value = {
     id: tarea.id,
     titulo: tarea.titulo,
     descripcion: tarea.descripcion || '',
     prioridad: tarea.prioridad,
-    fecha_limite: tarea.fecha_limite ? new Date(tarea.fecha_limite).toISOString().split('T')[0] : ''
+    fecha_limite: fechaStr,
+    hora_limite: horaStr,
+    areas_ids: areasIds
   };
   modalEditarAbierto.value = true;
 };
@@ -294,11 +326,24 @@ const guardarCambios = async () => {
   }
 
   try {
+    let fechaCompleta = null;
+    if (tareaEditando.value.fecha_limite) {
+      const hora = tareaEditando.value.hora_limite || '23:59';
+      fechaCompleta = `${tareaEditando.value.fecha_limite}T${hora}:00`;
+    }
+
+    const areasAsignadas = tareaEditando.value.areas_ids.map(areaId => ({
+      area_id: areaId,
+      asignada_a: null,
+      fecha_limite: fechaCompleta
+    }));
+
     await api.put(`/tareas/${tareaEditando.value.id}`, {
       titulo: tareaEditando.value.titulo,
       descripcion: tareaEditando.value.descripcion,
       prioridad: tareaEditando.value.prioridad,
-      fecha_limite: tareaEditando.value.fecha_limite || null
+      fecha_limite: fechaCompleta,
+      areas_asignadas: areasAsignadas
     });
     
     alert('✅ Tarea actualizada correctamente');
@@ -310,7 +355,15 @@ const guardarCambios = async () => {
   }
 };
 
-onMounted(() => cargarTareas());
+onMounted(async () => {
+  await cargarTareas();
+  try {
+    const resAreas = await api.get('/areas');
+    todasLasAreas.value = resAreas.data.data;
+  } catch (error) {
+    console.error('Error al cargar áreas', error);
+  }
+});
 </script>
 
 <style scoped>
@@ -384,7 +437,6 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .progreso-fill { height: 100%; background: #1a5c40; border-radius: 3px; transition: width 0.5s; }
 .progreso-fill.completo { background: #4caf50; }
 
-/* ✅ CONTENEDOR PRINCIPAL DE LA FILA */
 .tarea-meta { 
   display: flex; 
   justify-content: space-between; 
@@ -393,7 +445,6 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
   font-size: 12px; 
 }
 
-/* ✅ COLUMNA DE FECHA Y HORA */
 .meta-fecha-hora {
   display: flex;
   flex-direction: column;
@@ -422,7 +473,6 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
   align-items: center;
 }
 
-/* ✅ Estilo del botón de editar */
 .btn-editar-tarea {
   display: inline-flex;
   align-items: center;
@@ -447,7 +497,7 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .tarea-card:hover .btn-ver { background: #1a5c40; color: white; }
 .loading, .empty-state { text-align: center; padding: 60px 20px; color: #888; font-size: 15px; }
 
-/* ✅ ESTILOS DEL MODAL */
+/* ✅ MODAL */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -463,8 +513,11 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
   padding: 24px;
   border-radius: 12px;
   width: 100%;
-  max-width: 500px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal-large {
+  max-width: 650px;
 }
 
 .modal-content h2 {
@@ -473,14 +526,24 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
   font-weight: 800;
 }
 
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-grid .full-width {
+  grid-column: 1 / -1;
+}
+
 .modal-content .field {
-  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .modal-content .field label {
-  display: block;
   font-weight: 700;
-  margin-bottom: 4px;
   font-size: 13px;
   color: #0d3d2a;
 }
@@ -488,7 +551,6 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .modal-content .field input,
 .modal-content .field select,
 .modal-content .field textarea {
-  width: 100%;
   padding: 10px 14px;
   border: 2px solid #e0ebe5;
   border-radius: 6px;
@@ -504,13 +566,53 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
   border-color: #1a5c40;
 }
 
-.modal-content .form-row {
+.date-input-group {
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
-.modal-content .form-row .field {
-  flex: 1;
+.input-date { flex: 2; }
+.input-time { flex: 1; }
+
+.edit-areas-section {
+  margin-top: 16px;
+  border-top: 1px solid #e0ebe5;
+  padding-top: 16px;
+}
+
+.edit-areas-section > label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #0d3d2a;
+  font-size: 13px;
+}
+
+.areas-checkbox-list {
+  max-height: 150px;
+  overflow-y: auto;
+  background: #f8f9fa;
+  border: 1px solid #e0ebe5;
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.area-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #333;
+}
+
+.area-checkbox-item input {
+  accent-color: #1a5c40;
+  width: 16px;
+  height: 16px;
 }
 
 .modal-actions {
