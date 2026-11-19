@@ -13,24 +13,41 @@
       </div>
 
       <div class="detalle-body">
-        <!-- DESCRIPCIÓN E INFO -->
+        <!-- DESCRIPCIÓN -->
         <div class="info-section">
-          <h3><img src="/src/assets/icons/icon-descripcion.png" alt="" class="section-icon" /> Descripción</h3>
+          <h3>
+            <img src="/src/assets/icons/icon-descripcion.png" alt="" class="section-icon" />
+            Descripción
+          </h3>
           <p>{{ tarea.descripcion || 'Sin descripción' }}</p>
         </div>
 
+        <!-- INFORMACIÓN GENERAL -->
         <div class="info-grid">
           <div class="info-item">
             <span class="label">Prioridad</span>
             <span class="value prioridad" :class="tarea.prioridad">{{ tarea.prioridad.toUpperCase() }}</span>
           </div>
+          
+          <!-- ✅ FECHA LÍMITE -->
           <div class="info-item">
             <span class="label">Fecha Límite</span>
-            <span class="value">{{ formatDate(tarea.fecha_limite) }}</span>
+            <span class="value">{{ formatDateOnly(tarea.fecha_limite) }}</span>
           </div>
+          
+          <!-- ✅ HORA LÍMITE (NUEVO) -->
+          <div class="info-item">
+            <span class="label">Hora Límite</span>
+            <span class="value">{{ formatTimeOnly(tarea.fecha_limite) }}</span>
+          </div>
+
           <div class="info-item">
             <span class="label">Creado por</span>
             <span class="value">{{ tarea.creador?.nombre }} {{ tarea.creador?.apellidos }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Fecha de creación</span>
+            <span class="value">{{ formatDateOnly(tarea.creada_en) }}</span>
           </div>
           <div class="info-item">
             <span class="label">Áreas asignadas</span>
@@ -63,19 +80,14 @@
           </div>
         </div>
 
-        <!-- LISTADO DE ÁREAS (Filtrado por rol) -->
+        <!-- LISTADO DE ÁREAS -->
         <div class="areas-panel">
           <h4 style="color: #0d3d2a; font-size: 16px; margin-bottom: 12px;">
             {{ esAdmin ? 'Avance por Área:' : 'Avance de tu Área:' }}
           </h4>
           
           <div class="areas-lista-detalle">
-            <!-- ✅ AQUÍ APLICAMOS EL FILTRO: Si esAdmin mostramos todo, si no, solo su área -->
-            <div 
-              v-for="ta in areasAMostrar" 
-              :key="ta.id" 
-              class="area-detalle-card"
-            >
+            <div v-for="ta in areasAMostrar" :key="ta.id" class="area-detalle-card">
               
               <div class="area-detalle-header">
                 <div class="area-info-principal">
@@ -102,7 +114,6 @@
                     <button @click="descargarEvidencia(ev.id)" class="btn-descargar-mini">⬇</button>
                   </div>
                 </div>
-                <!-- Subir evidencia (si está en proceso y no es admin) -->
                 <div v-if="ta.estado === 'en_proceso' && !esAdmin">
                   <SubirEvidencia :tareaId="tarea.id" :areaId="ta.area_id" @archivo-subido="cargarEvidencias" />
                 </div>
@@ -157,19 +168,13 @@ const loading = ref(true);
 
 const esAdmin = computed(() => authStore.isSuperAdmin);
 
-// ✅ FILTRO DE SEGURIDAD: Admin ve todo, Gestor solo su área
 const areasAMostrar = computed(() => {
   if (!tarea.value || !tarea.value.areas_asignadas) return [];
-  if (esAdmin.value) {
-    return tarea.value.areas_asignadas; // Admin ve todo
-  } else {
-    // Gestor solo ve su área (comparando con el area_id de su perfil)
-    const miAreaId = authStore.usuario?.area_id;
-    return tarea.value.areas_asignadas.filter(ta => ta.area_id === miAreaId);
-  }
+  if (esAdmin.value) return tarea.value.areas_asignadas;
+  const miAreaId = authStore.usuario?.area_id;
+  return tarea.value.areas_asignadas.filter(ta => ta.area_id === miAreaId);
 });
 
-// Validar si TODAS las áreas están completadas (para el botón general del admin)
 const todasAreasCompletadas = computed(() => {
   if (!tarea.value || !tarea.value.areas_asignadas) return false;
   return tarea.value.areas_asignadas.every(ta => ta.estado === 'completada');
@@ -219,7 +224,8 @@ const cambiarEstadoArea = async (areaId, nuevoEstado) => {
     await api.put(`/tareas/${tarea.value.id}/areas/${areaId}`, { estado: nuevoEstado });
     await cargarTarea();
   } catch (error) {
-    alert('Error al cambiar estado del área');
+    // Si el backend rechaza por vencimiento, muestra el mensaje
+    alert(error.response?.data?.message || 'Error al cambiar estado del área');
     cargarTarea();
   }
 };
@@ -245,7 +251,17 @@ const getEstadoLabel = (estado) => {
   const map = { 'pendiente': 'Pendiente', 'en_proceso': 'En Proceso', 'por_validar': 'Por Validar', 'completada': 'Completada', 'rechazada': 'Rechazada' };
   return map[estado] || estado;
 };
-const formatDate = (d) => d ? new Date(d).toLocaleString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Sin fecha';
+
+// ✅ Funciones para separar fecha y hora
+const formatDateOnly = (d) => {
+  if (!d) return 'Sin fecha';
+  return new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const formatTimeOnly = (d) => {
+  if (!d) return 'Sin hora';
+  return new Date(d).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+};
 
 onMounted(() => {
   cargarTarea();
