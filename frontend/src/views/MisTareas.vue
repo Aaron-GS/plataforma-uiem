@@ -161,7 +161,7 @@
             <!-- 3. VER DETALLE -->
             <span class="btn-accion btn-ver">
               <img src="/src/assets/icons/icon-ver.png" alt="" class="btn-icon-small" />
-              Ver Detalle
+              Ver Tarea
             </span>
           </div>
         </div>
