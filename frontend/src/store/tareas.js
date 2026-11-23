@@ -7,11 +7,11 @@ export const useTareasStore = defineStore('tareas', {
     state: () => ({
         tareas: [],
         loading: false,
-        escuchando: false
+        socketIniciado: false
     }),
 
     actions: {
-        // Cargar las tareas (activas)
+        // Cargar tareas (filtradas por el rol del usuario)
         async cargarTareas() {
             this.loading = true;
             try {
@@ -24,35 +24,36 @@ export const useTareasStore = defineStore('tareas', {
             }
         },
 
-        // Cargar las tareas completadas
+        // Cargar tareas completadas
         async cargarTareasCompletadas() {
             this.loading = true;
             try {
                 const response = await api.get('/tareas?estado=completada');
                 this.tareas = response.data.data || [];
             } catch (error) {
-                console.error('Error al cargar tareas completadas:', error);
+                console.error('Error al cargar completadas:', error);
             } finally {
                 this.loading = false;
             }
         },
 
-        // Iniciar la escucha global (solo se llama una vez)
-        iniciarEscuchaTiempoReal() {
-            if (this.escuchando) return;
-            
+        // Iniciar la escucha global (solo una vez por sesión)
+        iniciarEscucha() {
+            if (this.socketIniciado) {
+                console.log('⚠️ El socket ya está escuchando, evitando duplicados.');
+                return;
+            }
+
             const socket = getSocket();
             if (socket) {
                 socket.on('actualizar_tareas', () => {
-                    console.log('🔄 Evento recibido: recargando datos...');
-                    // Si el store tiene tareas, recargarlas (dependiendo de qué vista esté activa)
-                    // Para simplificar, recargamos las activas. Las vistas se encargan de pedir las completadas.
-                    if (this.tareas.length > 0) {
-                        this.cargarTareas(); 
-                    }
+                    console.log('🔄 Evento recibido: recargando tareas...');
+                    // Recargamos dependiendo de la ruta actual (activas o completadas)
+                    // Por simplicidad, recargamos las activas. Las completadas se recargan al entrar a su vista.
+                    this.cargarTareas();
                 });
-                this.escuchando = true;
-                console.log('✅ Escuchando cambios en tiempo real');
+                this.socketIniciado = true;
+                console.log('✅ Escucha global de tareas iniciada.');
             }
         }
     }
