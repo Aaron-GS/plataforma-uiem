@@ -141,9 +141,21 @@
               v-if="authStore.isSuperAdmin" 
               @click.stop="abrirModalEditar(tarea)" 
               class="btn-editar-tarea"
+              title="Editar Tarea"
             >
-              ✏️ Editar
+              ✏️
             </button>
+
+            <!-- ✅ BOTÓN DE BORRAR (Solo Admin) -->
+            <button 
+              v-if="authStore.isSuperAdmin" 
+              @click.stop="confirmarEliminar(tarea.id)" 
+              class="btn-borrar-tarea"
+              title="Eliminar Tarea"
+            >
+              🗑️
+            </button>
+
             <span class="btn-ver">
               <img src="/src/assets/icons/icon-ver.png" alt="" class="btn-icon-small" />
               Ver Detalle
@@ -226,7 +238,7 @@ const loading = ref(true);
 const filtros = ref({ busqueda: '', estado: '', prioridad: '' });
 const todasLasAreas = ref([]);
 
-// ✅ Variables para el modal de edición
+// Variables para el modal de edición
 const modalEditarAbierto = ref(false);
 const tareaEditando = ref({ id: null, titulo: '', descripcion: '', prioridad: '', fecha_limite: '', hora_limite: '', areas_ids: [] });
 
@@ -329,16 +341,13 @@ const guardarCambios = async () => {
     let fechaCompleta = null;
     if (tareaEditando.value.fecha_limite) {
       const hora = tareaEditando.value.hora_limite || '23:59';
-      // El backend se encargará de limpiar el formato
-      fechaCompleta = `${tareaEditando.value.fecha_limite}T${hora}:00`; 
+      fechaCompleta = `${tareaEditando.value.fecha_limite}T${hora}:00`;
     }
 
     const areasAsignadas = tareaEditando.value.areas_ids.map(areaId => ({
       area_id: areaId,
       asignada_a: null
     }));
-
-    console.log('Enviando:', { fechaCompleta, areasAsignadas });
 
     await api.put(`/tareas/${tareaEditando.value.id}`, {
       titulo: tareaEditando.value.titulo,
@@ -353,9 +362,21 @@ const guardarCambios = async () => {
     await cargarTareas();
   } catch (error) {
     console.error('Error al actualizar:', error);
-    // Mostrar el error exacto del backend para depurar
-    const msjError = error.response?.data?.error || error.response?.data?.message || error.message;
-    alert(`❌ Error: ${msjError}`);
+    alert('❌ Error al guardar los cambios');
+  }
+};
+
+// ✅ Función para eliminar tarea
+const confirmarEliminar = async (id) => {
+  if (confirm('⚠️ ¿Estás seguro de que deseas eliminar esta tarea permanentemente? Esta acción no se puede deshacer.')) {
+    try {
+      await api.delete(`/tareas/${id}`);
+      alert('🗑️ Tarea eliminada correctamente');
+      await cargarTareas();
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+      alert('❌ Error al eliminar la tarea: ' + (error.response?.data?.message || error.message));
+    }
   }
 };
 
@@ -477,23 +498,43 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
   align-items: center;
 }
 
+/* ✅ Estilo del botón de editar (ahora solo emoji) */
 .btn-editar-tarea {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
+  justify-content: center;
+  padding: 6px 10px;
   background: #fff3e0;
   color: #e65100;
   border: 1px solid #ff9800;
   border-radius: 6px;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-editar-tarea:hover {
   background: #ff9800;
+  color: white;
+}
+
+/* ✅ Estilo del botón de borrar */
+.btn-borrar-tarea {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  background: #ffebee;
+  color: #b71c1c;
+  border: 1px solid #f44336;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-borrar-tarea:hover {
+  background: #f44336;
   color: white;
 }
 

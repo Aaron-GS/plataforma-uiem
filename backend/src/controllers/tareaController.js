@@ -234,16 +234,11 @@ exports.obtenerTareaPorId = async (req, res) => {
 // =============================================
 // ACTUALIZAR TAREA (EDICIÓN COMPLETA: DATOS Y ÁREAS)
 // =============================================
-// backend/src/controllers/tareaController.js
-
 exports.actualizarTarea = async (req, res) => {
     try {
         const { id } = req.params;
         const { titulo, descripcion, prioridad, fecha_limite, estado, areas_asignadas } = req.body;
         const usuario = req.usuario;
-
-        console.log('📝 Editando tarea ID:', id);
-        console.log('📝 Datos recibidos:', req.body);
 
         const tarea = await Tarea.findByPk(id);
         if (!tarea) return res.status(404).json({ success: false, message: 'Tarea no encontrada' });
@@ -258,10 +253,9 @@ exports.actualizarTarea = async (req, res) => {
         if (descripcion !== undefined) tarea.descripcion = descripcion;
         if (prioridad) tarea.prioridad = prioridad;
         
-        // ✅ Limpiar y formatear la fecha para MySQL
+        // Limpiar y formatear la fecha para MySQL
         if (fecha_limite !== undefined) {
             if (fecha_limite) {
-                // Reemplazar la 'T' por un espacio y quitar la 'Z' si viene con formato ISO
                 const fechaLimpia = fecha_limite.replace('T', ' ').replace('Z', '').split('.')[0];
                 tarea.fecha_limite = fechaLimpia;
             } else {
@@ -274,7 +268,7 @@ exports.actualizarTarea = async (req, res) => {
 
         await tarea.save();
 
-        // Actualizar fechas en las áreas existentes
+        // Actualizar fechas en áreas existentes
         if (fecha_limite !== undefined) {
             const fechaParaAreas = fecha_limite ? fecha_limite.replace('T', ' ').replace('Z', '').split('.')[0] : null;
             await TareaArea.update(
@@ -289,14 +283,12 @@ exports.actualizarTarea = async (req, res) => {
             const idsActuales = areasActuales.map(a => a.area_id);
             const idsNuevos = areas_asignadas.map(a => parseInt(a.area_id));
 
-            // Eliminar áreas desmarcadas
             for (const areaActual of areasActuales) {
                 if (!idsNuevos.includes(areaActual.area_id)) {
                     await areaActual.destroy();
                 }
             }
 
-            // Agregar áreas nuevas
             for (const nuevaArea of areas_asignadas) {
                 if (!idsActuales.includes(parseInt(nuevaArea.area_id))) {
                     await TareaArea.create({
@@ -319,35 +311,34 @@ exports.actualizarTarea = async (req, res) => {
         });
 
         res.json({ success: true, data: tarea, message: 'Tarea actualizada correctamente' });
-
     } catch (error) {
-        console.error('❌ Error al editar tarea:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error al editar la tarea', 
-            error: error.message 
-        });
+        console.error('Error al editar tarea:', error);
+        res.status(500).json({ success: false, message: 'Error al editar la tarea', error: error.message });
     }
 };
 
 // =============================================
-// ELIMINAR TAREA
+// ELIMINAR TAREA (BORRADO FÍSICO)
 // =============================================
 exports.eliminarTarea = async (req, res) => {
     try {
         const { id } = req.params;
         const usuario = req.usuario;
-        const tarea = await Tarea.findByPk(id);
 
+        const tarea = await Tarea.findByPk(id);
         if (!tarea) return res.status(404).json({ success: false, message: 'Tarea no encontrada' });
+
+        // Solo superadmin o el creador pueden eliminar
         if (usuario.rol !== 'superadmin' && tarea.creada_por !== usuario.id) {
-            return res.status(403).json({ success: false, message: 'No tienes permiso' });
+            return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar esta tarea' });
         }
 
         await tarea.destroy();
-        res.json({ success: true, message: 'Tarea eliminada' });
+
+        res.json({ success: true, message: 'Tarea eliminada correctamente' });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error al eliminar tarea', error: error.message });
+        console.error('Error al eliminar tarea:', error);
+        res.status(500).json({ success: false, message: 'Error al eliminar la tarea', error: error.message });
     }
 };
 
