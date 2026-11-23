@@ -1,15 +1,17 @@
 // backend/src/controllers/tareaController.js
 const { Tarea, Usuario, Area, TareaArea, HistorialTarea, Notificacion } = require('../models');
 const { Op } = require('sequelize');
-const { enviarNotificacion, notificarSuperAdmins, io } = require('../config/socket');
+const socketModule = require('../config/socket'); // ✅ Importamos el módulo completo
 
 // =============================================
 // FUNCIÓN AUXILIAR PARA EMITIR EVENTO EN TIEMPO REAL
 // =============================================
 const notificarCambioTareas = () => {
-    if (io) {
-        io.emit('actualizar_tareas'); // Emite a TODOS los conectados
+    if (socketModule.io) {
+        socketModule.io.emit('actualizar_tareas'); // ✅ Usamos socketModule.io
         console.log('📡 Evento "actualizar_tareas" emitido a todos los clientes');
+    } else {
+        console.log('⚠️ io no está inicializado aún');
     }
 };
 
@@ -99,7 +101,7 @@ exports.crearTarea = async (req, res) => {
                     tipo: 'asignacion',
                     mensaje: `📋 Se te ha asignado la tarea: "${titulo}"`
                 });
-                enviarNotificacion(area.asignada_a, 'asignacion', `📋 Se te ha asignado la tarea: "${titulo}"`, nuevaTarea.id);
+                socketModule.enviarNotificacion(area.asignada_a, 'asignacion', `📋 Se te ha asignado la tarea: "${titulo}"`, nuevaTarea.id);
             }
         }
 
@@ -303,7 +305,7 @@ exports.actualizarTarea = async (req, res) => {
                 if (!idsActuales.includes(parseInt(nuevaArea.area_id))) {
                     await TareaArea.create({
                         tarea_id: id,
-                        area_id: parseInt(nuevaArea.area_id),
+                        area_id: parseInt(nueva_area_id),
                         asignada_a: nuevaArea.asignada_a ? parseInt(nuevaArea.asignada_a) : null,
                         estado: 'pendiente',
                         fecha_limite: tarea.fecha_limite
