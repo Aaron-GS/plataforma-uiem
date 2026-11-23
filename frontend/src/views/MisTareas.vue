@@ -135,28 +135,31 @@
             <img src="/src/assets/icons/icon-area.png" alt="" class="meta-icon-small" />
             {{ tarea.areas_asignadas?.length || 0 }} área(s)
           </span>
+          
+          <!-- ✅ BOTONES ORDENADOS CON TEXTO -->
           <div class="footer-botones">
-            <!-- ✅ BOTÓN DE EDITAR (Solo Admin) -->
-            <button 
-              v-if="authStore.isSuperAdmin" 
-              @click.stop="abrirModalEditar(tarea)" 
-              class="btn-editar-tarea"
-              title="Editar Tarea"
-            >
-              ✏️
-            </button>
-
-            <!-- ✅ BOTÓN DE BORRAR (Solo Admin) -->
+            <!-- 1. ELIMINAR -->
             <button 
               v-if="authStore.isSuperAdmin" 
               @click.stop="confirmarEliminar(tarea.id)" 
-              class="btn-borrar-tarea"
+              class="btn-accion btn-borrar"
               title="Eliminar Tarea"
             >
-              🗑️
+              🗑️ Eliminar
             </button>
 
-            <span class="btn-ver">
+            <!-- 2. EDITAR -->
+            <button 
+              v-if="authStore.isSuperAdmin" 
+              @click.stop="abrirModalEditar(tarea)" 
+              class="btn-accion btn-editar"
+              title="Editar Tarea"
+            >
+              ✏️ Editar
+            </button>
+
+            <!-- 3. VER DETALLE -->
+            <span class="btn-accion btn-ver">
               <img src="/src/assets/icons/icon-ver.png" alt="" class="btn-icon-small" />
               Ver Detalle
             </span>
@@ -492,54 +495,63 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .tarea-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #e0ebe5; }
 .area { font-size: 12px; color: #888; }
 
+/* ✅ CONTENEDOR DE BOTONES */
 .footer-botones {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-/* ✅ Estilo del botón de editar (ahora solo emoji) */
-.btn-editar-tarea {
+/* ✅ ESTILO BASE PARA TODOS LOS BOTONES */
+.btn-accion {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
-  background: #fff3e0;
-  color: #e65100;
-  border: 1px solid #ff9800;
+  gap: 4px;
+  padding: 6px 12px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  border: 1px solid transparent;
 }
 
-.btn-editar-tarea:hover {
-  background: #ff9800;
-  color: white;
-}
-
-/* ✅ Estilo del botón de borrar */
-.btn-borrar-tarea {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 10px;
+/* ✅ ESTILO ESPECÍFICO: ELIMINAR (Rojo) */
+.btn-borrar {
   background: #ffebee;
   color: #b71c1c;
-  border: 1px solid #f44336;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
+  border-color: #f44336;
 }
-
-.btn-borrar-tarea:hover {
+.btn-borrar:hover {
   background: #f44336;
   color: white;
 }
 
-.btn-ver { display: inline-flex; align-items: center; gap: 4px; padding: 6px 16px; background: #e0ebe5; color: #0d3d2a; border-radius: 6px; font-size: 13px; font-weight: 700; transition: all 0.2s; }
-.tarea-card:hover .btn-ver { background: #1a5c40; color: white; }
+/* ✅ ESTILO ESPECÍFICO: EDITAR (Naranja) */
+.btn-editar {
+  background: #fff3e0;
+  color: #e65100;
+  border-color: #ff9800;
+}
+.btn-editar:hover {
+  background: #ff9800;
+  color: white;
+}
+
+/* ✅ ESTILO ESPECÍFICO: VER DETALLE (Verde) */
+.btn-ver {
+  background: #e0ebe5;
+  color: #0d3d2a;
+  border-color: #1a5c40;
+}
+.tarea-card:hover .btn-ver {
+  background: #1a5c40;
+  color: white;
+}
+
 .loading, .empty-state { text-align: center; padding: 60px 20px; color: #888; font-size: 15px; }
 
 /* ✅ MODAL */
