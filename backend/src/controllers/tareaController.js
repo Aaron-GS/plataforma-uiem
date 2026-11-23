@@ -1,7 +1,17 @@
 // backend/src/controllers/tareaController.js
 const { Tarea, Usuario, Area, TareaArea, HistorialTarea, Notificacion } = require('../models');
 const { Op } = require('sequelize');
-const { enviarNotificacion, notificarSuperAdmins } = require('../config/socket');
+const { enviarNotificacion, notificarSuperAdmins, io } = require('../config/socket');
+
+// =============================================
+// FUNCIÓN AUXILIAR PARA EMITIR EVENTO EN TIEMPO REAL
+// =============================================
+const notificarCambioTareas = () => {
+    if (io) {
+        io.emit('actualizar_tareas'); // Emite a TODOS los conectados
+        console.log('📡 Evento "actualizar_tareas" emitido a todos los clientes');
+    }
+};
 
 // =============================================
 // CREAR TAREA (MULTI-ÁREA)
@@ -106,6 +116,9 @@ exports.crearTarea = async (req, res) => {
                 }
             ]
         });
+
+        // ✅ EMITIR EVENTO EN TIEMPO REAL
+        notificarCambioTareas();
 
         res.status(201).json({
             success: true,
@@ -253,7 +266,6 @@ exports.actualizarTarea = async (req, res) => {
         if (descripcion !== undefined) tarea.descripcion = descripcion;
         if (prioridad) tarea.prioridad = prioridad;
         
-        // Limpiar y formatear la fecha para MySQL
         if (fecha_limite !== undefined) {
             if (fecha_limite) {
                 const fechaLimpia = fecha_limite.replace('T', ' ').replace('Z', '').split('.')[0];
@@ -268,7 +280,6 @@ exports.actualizarTarea = async (req, res) => {
 
         await tarea.save();
 
-        // Actualizar fechas en áreas existentes
         if (fecha_limite !== undefined) {
             const fechaParaAreas = fecha_limite ? fecha_limite.replace('T', ' ').replace('Z', '').split('.')[0] : null;
             await TareaArea.update(
@@ -277,7 +288,6 @@ exports.actualizarTarea = async (req, res) => {
             );
         }
 
-        // Actualizar áreas asignadas
         if (areas_asignadas && Array.isArray(areas_asignadas)) {
             const areasActuales = await TareaArea.findAll({ where: { tarea_id: id } });
             const idsActuales = areasActuales.map(a => a.area_id);
@@ -310,6 +320,9 @@ exports.actualizarTarea = async (req, res) => {
             datos_previos: datosPrevios
         });
 
+        // ✅ EMITIR EVENTO EN TIEMPO REAL
+        notificarCambioTareas();
+
         res.json({ success: true, data: tarea, message: 'Tarea actualizada correctamente' });
     } catch (error) {
         console.error('Error al editar tarea:', error);
@@ -328,12 +341,14 @@ exports.eliminarTarea = async (req, res) => {
         const tarea = await Tarea.findByPk(id);
         if (!tarea) return res.status(404).json({ success: false, message: 'Tarea no encontrada' });
 
-        // Solo superadmin o el creador pueden eliminar
         if (usuario.rol !== 'superadmin' && tarea.creada_por !== usuario.id) {
             return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar esta tarea' });
         }
 
         await tarea.destroy();
+
+        // ✅ EMITIR EVENTO EN TIEMPO REAL
+        notificarCambioTareas();
 
         res.json({ success: true, message: 'Tarea eliminada correctamente' });
     } catch (error) {
@@ -360,6 +375,10 @@ exports.reasignarTarea = async (req, res) => {
         if (nuevo_usuario_id) tarea.asignada_a = nuevo_usuario_id;
 
         await tarea.save();
+        
+        // ✅ EMITIR EVENTO
+        notificarCambioTareas();
+
         res.json({ success: true, data: tarea, message: 'Tarea reasignada' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error al reasignar', error: error.message });
@@ -377,7 +396,6 @@ exports.actualizarEstadoArea = async (req, res) => {
         const tareaArea = await TareaArea.findOne({ where: { tarea_id: tareaId, area_id: areaId } });
         if (!tareaArea) return res.status(404).json({ success: false, message: 'No encontrado' });
 
-        // Validación de vencimiento
         if (tareaArea.fecha_limite && new Date(tareaArea.fecha_limite) < new Date()) {
             if (estado === 'por_validar' || estado === 'completada') {
                 return res.status(400).json({ 
@@ -390,7 +408,6 @@ exports.actualizarEstadoArea = async (req, res) => {
         if (estado) tareaArea.estado = estado;
         await tareaArea.save();
 
-        // Lógica para completar tarea general
         const todasLasAreas = await TareaArea.findAll({ where: { tarea_id: tareaId } });
         const totalAreas = todasLasAreas.length;
         const areasCompletadas = todasLasAreas.filter(a => a.estado === 'completada').length;
@@ -417,6 +434,9 @@ exports.actualizarEstadoArea = async (req, res) => {
                 await tareaGeneral.save();
             }
         }
+
+        // ✅ EMITIR EVENTO
+        notificarCambioTareas();
 
         res.json({ success: true, data: tareaArea });
     } catch (error) {

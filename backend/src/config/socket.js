@@ -8,7 +8,7 @@ let io;
 const initSocket = (server) => {
     io = socketIO(server, {
         cors: {
-            origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+            origin: process.env.FRONTEND_URL || 'http://172.16.100.30:8080',
             methods: ['GET', 'POST'],
             credentials: true
         }
@@ -58,6 +58,7 @@ const initSocket = (server) => {
     return io;
 };
 
+// Funciones para enviar notificaciones
 const enviarNotificacion = (usuarioId, tipo, mensaje, tareaId = null, datos = null) => {
     if (!io) return;
     

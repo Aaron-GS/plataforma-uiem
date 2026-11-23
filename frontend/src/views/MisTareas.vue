@@ -161,7 +161,7 @@
             <!-- 3. VER DETALLE -->
             <span class="btn-accion btn-ver">
               <img src="/src/assets/icons/icon-ver.png" alt="" class="btn-icon-small" />
-              Ver Tarea
+              Ver Detalle
             </span>
           </div>
         </div>
@@ -228,10 +228,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../store/auth';
 import api from '../services/api';
+import { getSocket } from '../services/socket';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -383,6 +384,7 @@ const confirmarEliminar = async (id) => {
   }
 };
 
+// ✅ EVENTOS DE TIEMPO REAL (SOCKET)
 onMounted(async () => {
   await cargarTareas();
   try {
@@ -390,6 +392,21 @@ onMounted(async () => {
     todasLasAreas.value = resAreas.data.data;
   } catch (error) {
     console.error('Error al cargar áreas', error);
+  }
+
+  const socket = getSocket();
+  if (socket) {
+    socket.on('actualizar_tareas', () => {
+      console.log('🔄 Actualizando lista de tareas automáticamente...');
+      cargarTareas();
+    });
+  }
+});
+
+onUnmounted(() => {
+  const socket = getSocket();
+  if (socket) {
+    socket.off('actualizar_tareas');
   }
 });
 </script>
@@ -495,7 +512,6 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
 .tarea-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #e0ebe5; }
 .area { font-size: 12px; color: #888; }
 
-/* ✅ CONTENEDOR DE BOTONES */
 .footer-botones {
   display: flex;
   gap: 8px;
@@ -503,7 +519,6 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
   flex-wrap: wrap;
 }
 
-/* ✅ ESTILO BASE PARA TODOS LOS BOTONES */
 .btn-accion {
   display: inline-flex;
   align-items: center;
@@ -519,42 +534,17 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
   border: 1px solid transparent;
 }
 
-/* ✅ ESTILO ESPECÍFICO: ELIMINAR (Rojo) */
-.btn-borrar {
-  background: #ffebee;
-  color: #b71c1c;
-  border-color: #f44336;
-}
-.btn-borrar:hover {
-  background: #f44336;
-  color: white;
-}
+.btn-borrar { background: #ffebee; color: #b71c1c; border-color: #f44336; }
+.btn-borrar:hover { background: #f44336; color: white; }
 
-/* ✅ ESTILO ESPECÍFICO: EDITAR (Naranja) */
-.btn-editar {
-  background: #fff3e0;
-  color: #e65100;
-  border-color: #ff9800;
-}
-.btn-editar:hover {
-  background: #ff9800;
-  color: white;
-}
+.btn-editar { background: #fff3e0; color: #e65100; border-color: #ff9800; }
+.btn-editar:hover { background: #ff9800; color: white; }
 
-/* ✅ ESTILO ESPECÍFICO: VER DETALLE (Verde) */
-.btn-ver {
-  background: #e0ebe5;
-  color: #0d3d2a;
-  border-color: #1a5c40;
-}
-.tarea-card:hover .btn-ver {
-  background: #1a5c40;
-  color: white;
-}
+.btn-ver { background: #e0ebe5; color: #0d3d2a; border-color: #1a5c40; }
+.tarea-card:hover .btn-ver { background: #1a5c40; color: white; }
 
 .loading, .empty-state { text-align: center; padding: 60px 20px; color: #888; font-size: 15px; }
 
-/* ✅ MODAL */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -573,132 +563,38 @@ option.opt-alta { background: #ffebee; color: #b71c1c; }
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
-.modal-large {
-  max-width: 650px;
-}
+.modal-large { max-width: 650px; }
 
-.modal-content h2 {
-  color: #0d3d2a;
-  margin-bottom: 20px;
-  font-weight: 800;
-}
+.modal-content h2 { color: #0d3d2a; margin-bottom: 20px; font-weight: 800; }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid .full-width { grid-column: 1 / -1; }
 
-.form-grid .full-width {
-  grid-column: 1 / -1;
-}
-
-.modal-content .field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.modal-content .field label {
-  font-weight: 700;
-  font-size: 13px;
-  color: #0d3d2a;
-}
-
+.modal-content .field { display: flex; flex-direction: column; gap: 4px; }
+.modal-content .field label { font-weight: 700; font-size: 13px; color: #0d3d2a; }
 .modal-content .field input,
 .modal-content .field select,
 .modal-content .field textarea {
-  padding: 10px 14px;
-  border: 2px solid #e0ebe5;
-  border-radius: 6px;
-  font-size: 14px;
-  font-family: inherit;
-  box-sizing: border-box;
+  padding: 10px 14px; border: 2px solid #e0ebe5; border-radius: 6px; font-size: 14px; font-family: inherit; box-sizing: border-box;
 }
-
 .modal-content .field input:focus,
 .modal-content .field select:focus,
-.modal-content .field textarea:focus {
-  outline: none;
-  border-color: #1a5c40;
-}
+.modal-content .field textarea:focus { outline: none; border-color: #1a5c40; }
 
-.date-input-group {
-  display: flex;
-  gap: 8px;
-}
-
+.date-input-group { display: flex; gap: 8px; }
 .input-date { flex: 2; }
 .input-time { flex: 1; }
 
-.edit-areas-section {
-  margin-top: 16px;
-  border-top: 1px solid #e0ebe5;
-  padding-top: 16px;
-}
-
-.edit-areas-section > label {
-  display: block;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: #0d3d2a;
-  font-size: 13px;
-}
-
+.edit-areas-section { margin-top: 16px; border-top: 1px solid #e0ebe5; padding-top: 16px; }
+.edit-areas-section > label { display: block; font-weight: 700; margin-bottom: 8px; color: #0d3d2a; font-size: 13px; }
 .areas-checkbox-list {
-  max-height: 150px;
-  overflow-y: auto;
-  background: #f8f9fa;
-  border: 1px solid #e0ebe5;
-  border-radius: 6px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  max-height: 150px; overflow-y: auto; background: #f8f9fa; border: 1px solid #e0ebe5; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 6px;
 }
+.area-checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: #333; }
+.area-checkbox-item input { accent-color: #1a5c40; width: 16px; height: 16px; }
 
-.area-checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  cursor: pointer;
-  color: #333;
-}
-
-.area-checkbox-item input {
-  accent-color: #1a5c40;
-  width: 16px;
-  height: 16px;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.btn-cancel {
-  padding: 10px 20px;
-  background: #f0f0f0;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn-save {
-  padding: 10px 20px;
-  background: #1a5c40;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn-save:hover {
-  background: #0d3d2a;
-}
+.modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+.btn-cancel { padding: 10px 20px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.btn-save { padding: 10px 20px; background: #1a5c40; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.btn-save:hover { background: #0d3d2a; }
 </style>
