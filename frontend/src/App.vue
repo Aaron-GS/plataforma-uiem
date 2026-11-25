@@ -6,7 +6,6 @@
       class="navbar"
     >
       <div class="nav-container">
-        
         <div class="nav-brand">
           <img src="/src/assets/icons/logo-uiem.png" alt="UIEM" class="brand-logo" />
           <div class="brand-text-container">
@@ -21,7 +20,6 @@
         </button>
 
         <div class="nav-links" :class="{ 'menu-abierto': menuAbierto }">
-          
           <router-link to="/mis-tareas" class="nav-link" @click="menuAbierto = false">
             <img src="/src/assets/icons/icon-tareas.png" alt="" class="nav-icon" />
             <span>Mis Tareas</span>
@@ -82,13 +80,13 @@
 import { ref, onMounted, watch } from 'vue';
 import { useAuthStore } from './store/auth';
 import { useNotificacionesStore } from './store/notificaciones';
-import { useTareasStore } from './store/tareas'; // ✅ Importamos el store de tareas
+import { useTareasStore } from './store/tareas';
 import { useRouter, useRoute } from 'vue-router';
 import Notificaciones from './components/Notificaciones.vue';
 
 const authStore = useAuthStore();
 const notificacionesStore = useNotificacionesStore();
-const tareasStore = useTareasStore(); // ✅ Instanciamos
+const tareasStore = useTareasStore();
 const router = useRouter();
 const route = useRoute();
 
@@ -115,23 +113,17 @@ watch(() => route.path, () => {
 onMounted(() => {
   if (authStore.isAuthenticated) {
     notificacionesStore.iniciarEscucha();
-    tareasStore.iniciarEscucha(); // ✅ Iniciar escucha global
+    tareasStore.iniciarEscucha(); // ✅ Inicia escucha global
   }
 });
 </script>
 
 <style>
-/* ============================================
-   RESET Y BASE
-   ============================================ */
+/* Estilos de App.vue (sin cambios) */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7f6; color: #333; overflow-x: hidden; }
 html, body, #app { min-height: 100vh; }
 #app { display: flex; flex-direction: column; }
-
-/* ============================================
-   NAVBAR
-   ============================================ */
 .navbar { background: linear-gradient(135deg, #0d3d2a 0%, #1a5c40 100%); color: white; padding: 0; box-shadow: 0 4px 20px rgba(13, 61, 42, 0.3); position: sticky; top: 0; z-index: 100; border-bottom: 3px solid #2d7a55; }
 .nav-container { max-width: 1400px; margin: 0 auto; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; height: 72px; position: relative; gap: 10px; }
 .nav-brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex-shrink: 0; max-width: 380px; }
@@ -166,7 +158,6 @@ html, body, #app { min-height: 100vh; }
 .logout-text { white-space: nowrap; }
 .logout-icon { width: 18px; height: 18px; object-fit: contain; filter: none; }
 .main-content { flex: 1; max-width: 1400px; margin: 0 auto; padding: 24px; width: 100%; }
-
 @media (max-width: 1200px) { .brand-title { font-size: 8px; } .brand-subtitle { font-size: 7px; } .nav-link { padding: 6px 8px; font-size: 12px; } .nav-link span { display: none; } .nav-icon { margin: 0; } }
 @media (max-width: 1024px) { .user-info { display: none; } .user-menu { padding: 4px; max-width: none; } }
 @media (max-width: 768px) { .nav-container { padding: 0 16px; height: 68px; } .btn-hamburger { display: flex; align-items: center; justify-content: center; } .brand-logo { width: 42px; height: 42px; } .brand-title { font-size: 9px; letter-spacing: 0.3px; } .brand-subtitle { font-size: 7.5px; letter-spacing: 0.4px; } .nav-links { position: fixed; top: 68px; left: 0; right: 0; background: linear-gradient(180deg, #0d3d2a 0%, #1a5c40 100%); flex-direction: column; align-items: stretch; padding: 16px; gap: 6px; transform: translateX(-100%); transition: transform 0.3s ease; max-height: calc(100vh - 68px); overflow-y: auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border-top: 2px solid #2d7a55; } .nav-links.menu-abierto { transform: translateX(0); } .nav-link { padding: 14px 16px; font-size: 15px; border-radius: 8px; text-align: left; } .nav-link span { display: inline; } .nav-icon { width: 22px; height: 22px; } .nav-link.router-link-active { background: rgba(74, 222, 128, 0.2); box-shadow: inset 4px 0 0 #4ade80; } .nav-divider { display: block; } .user-menu { margin: 8px 0; padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.1); max-width: none; } .user-info { display: flex; } .btn-logout { margin: 8px 0 0 0; padding: 14px; width: 100%; height: auto; gap: 10px; justify-content: center; } .btn-logout::after { content: 'Cerrar Sesión'; font-size: 14px; font-weight: 700; } .main-content { padding: 16px; } }

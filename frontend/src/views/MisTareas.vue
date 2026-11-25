@@ -1,6 +1,7 @@
 <!-- frontend/src/views/MisTareas.vue -->
 <template>
   <div class="page-container">
+    <!-- HEADER -->
     <div class="header">
       <div class="header-title">
         <h1>
@@ -12,7 +13,11 @@
         </p>
       </div>
 
-      <button v-if="authStore.puedeCrearTareas" @click="irACrearTarea" class="btn-crear-tarea">
+      <button 
+        v-if="authStore.puedeCrearTareas" 
+        @click="irACrearTarea" 
+        class="btn-crear-tarea"
+      >
         <img src="/src/assets/icons/icon-crear.png" alt="" class="btn-icon" />
         Crear Tarea
       </button>
@@ -57,14 +62,19 @@
       </div>
     </div>
 
-    <!-- Lista -->
+    <!-- Lista de tareas -->
     <div v-if="loading" class="loading">Cargando tareas...</div>
     <div v-else-if="tareasFiltradas.length === 0" class="empty-state">
       <p>No hay tareas que coincidan con los filtros</p>
     </div>
 
     <div v-else class="tareas-grid">
-      <div v-for="tarea in tareasFiltradas" :key="tarea.id" class="tarea-card" @click="verDetalle(tarea.id)">
+      <div 
+        v-for="tarea in tareasFiltradas" 
+        :key="tarea.id" 
+        class="tarea-card" 
+        @click="verDetalle(tarea.id)"
+      >
         <div class="tarea-header">
           <h3>{{ tarea.titulo }}</h3>
           <div class="estados-container">
@@ -74,13 +84,20 @@
         </div>
         <p class="descripcion">{{ tarea.descripcion || 'Sin descripción' }}</p>
         
-        <div v-if="authStore.isSuperAdmin && tarea.areas_asignadas && tarea.areas_asignadas.length > 0" class="progreso-resumen">
+        <div 
+          v-if="authStore.isSuperAdmin && tarea.areas_asignadas && tarea.areas_asignadas.length > 0" 
+          class="progreso-resumen"
+        >
           <div class="progreso-info">
             <span>Progreso de áreas:</span>
             <strong>{{ getAreasCompletadas(tarea) }} de {{ tarea.areas_asignadas.length }} completadas</strong>
           </div>
           <div class="progreso-barra">
-            <div class="progreso-fill" :style="{ width: getPorcentaje(tarea) + '%' }" :class="{ 'completo': getPorcentaje(tarea) === 100 }"></div>
+            <div 
+              class="progreso-fill" 
+              :style="{ width: getPorcentaje(tarea) + '%' }"
+              :class="{ 'completo': getPorcentaje(tarea) === 100 }"
+            ></div>
           </div>
         </div>
 
@@ -118,34 +135,49 @@
           </span>
           
           <div class="footer-botones">
-            <button v-if="authStore.isSuperAdmin" @click.stop="confirmarEliminar(tarea.id)" class="btn-accion btn-borrar" title="Eliminar Tarea">
+            <button 
+              v-if="authStore.isSuperAdmin" 
+              @click.stop="confirmarEliminar(tarea.id)" 
+              class="btn-accion btn-borrar"
+              title="Eliminar Tarea"
+            >
               🗑️ Eliminar
             </button>
-            <button v-if="authStore.isSuperAdmin" @click.stop="abrirModalEditar(tarea)" class="btn-accion btn-editar" title="Editar Tarea">
+
+            <button 
+              v-if="authStore.isSuperAdmin" 
+              @click.stop="abrirModalEditar(tarea)" 
+              class="btn-accion btn-editar"
+              title="Editar Tarea"
+            >
               ✏️ Editar
             </button>
+
             <span class="btn-accion btn-ver">
               <img src="/src/assets/icons/icon-ver.png" alt="" class="btn-icon-small" />
-              Ver Tarea
+              Ver Detalle
             </span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- MODAL DE EDICIÓN (sin cambios) -->
+    <!-- MODAL DE EDICIÓN -->
     <div v-if="modalEditarAbierto" class="modal-overlay" @click.self="cerrarModalEditar">
       <div class="modal-content modal-large">
         <h2>Editar Tarea</h2>
+        
         <div class="form-grid">
           <div class="field full-width">
             <label>Título *</label>
             <input v-model="tareaEditando.titulo" type="text" required />
           </div>
+
           <div class="field full-width">
             <label>Descripción</label>
             <textarea v-model="tareaEditando.descripcion" rows="2"></textarea>
           </div>
+
           <div class="field">
             <label>Prioridad</label>
             <select v-model="tareaEditando.prioridad">
@@ -154,6 +186,7 @@
               <option value="alta">Alta</option>
             </select>
           </div>
+          
           <div class="field">
             <label>Fecha y Hora Límite</label>
             <div class="date-input-group">
@@ -162,34 +195,42 @@
             </div>
           </div>
         </div>
+
         <div class="edit-areas-section">
           <label>Áreas Asignadas ({{ tareaEditando.areas_ids.length }} seleccionadas)</label>
           <div class="areas-checkbox-list">
             <label v-for="area in todasLasAreas" :key="area.id" class="area-checkbox-item">
-              <input type="checkbox" :value="area.id" v-model="tareaEditando.areas_ids" />
+              <input 
+                type="checkbox" 
+                :value="area.id" 
+                v-model="tareaEditando.areas_ids"
+              />
               {{ area.nombre }}
             </label>
           </div>
         </div>
+
         <div class="modal-actions">
           <button @click="cerrarModalEditar" class="btn-cancel">Cancelar</button>
           <button @click="guardarCambios" class="btn-save">Guardar Cambios</button>
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../store/auth';
 import { useTareasStore } from '../store/tareas'; // ✅ Importamos el store
 import api from '../services/api';
+import { getSocket } from '../services/socket'; // ✅ Importamos el socket
 
 const router = useRouter();
 const authStore = useAuthStore();
-const tareasStore = useTareasStore(); // ✅ Instanciamos
+const tareasStore = useTareasStore();
 
 // Usamos las tareas del store global
 const tareas = computed(() => tareasStore.tareas);
@@ -305,6 +346,10 @@ const guardarCambios = async () => {
     
     alert('✅ Tarea actualizada correctamente');
     cerrarModalEditar();
+    
+    // ✅ FORZAR RECARGA LOCAL INMEDIATA
+    await tareasStore.cargarTareas(); 
+    
   } catch (error) {
     console.error('Error al actualizar:', error);
     alert('❌ Error al guardar los cambios');
@@ -316,6 +361,7 @@ const confirmarEliminar = async (id) => {
     try {
       await api.delete(`/tareas/${id}`);
       alert('🗑️ Tarea eliminada correctamente');
+      await tareasStore.cargarTareas(); // Recargar tras eliminar
     } catch (error) {
       console.error('Error al eliminar:', error);
       alert('❌ Error al eliminar la tarea: ' + (error.response?.data?.message || error.message));
@@ -324,18 +370,35 @@ const confirmarEliminar = async (id) => {
 };
 
 onMounted(async () => {
-  await tareasStore.cargarTareas(); // ✅ Cargar desde el store
+  await tareasStore.cargarTareas(); // Cargar inicial
   try {
     const resAreas = await api.get('/areas');
     todasLasAreas.value = resAreas.data.data;
   } catch (error) {
     console.error('Error al cargar áreas', error);
   }
+
+  // ✅ ESCUCHA DIRECTA DEL SOCKET EN ESTA VISTA (Por si el store falla)
+  const socket = getSocket();
+  if (socket) {
+    socket.on('actualizar_tareas', () => {
+      console.log('🔄 Actualizando lista de Mis Tareas por evento de socket...');
+      tareasStore.cargarTareas(); // Recarga los datos del store
+    });
+  }
+});
+
+onUnmounted(() => {
+  // Limpiar el listener al salir
+  const socket = getSocket();
+  if (socket) {
+    socket.off('actualizar_tareas');
+  }
 });
 </script>
 
 <style scoped>
-/* Los mismos estilos que ya tenías para MisTareas */
+/* ... (Los mismos estilos de tu MisTareas.vue original, sin cambios) ... */
 .page-container { max-width: 1300px; margin: 0 auto; }
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 3px solid #1a5c40; gap: 16px; flex-wrap: wrap; }
 .header-title h1 { font-size: 28px; color: #0d3d2a; font-weight: 800; display: flex; align-items: center; gap: 10px; margin: 0; }

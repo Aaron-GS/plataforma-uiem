@@ -11,7 +11,6 @@ export const useTareasStore = defineStore('tareas', {
     }),
 
     actions: {
-        // Cargar tareas (filtradas por el rol del usuario)
         async cargarTareas() {
             this.loading = true;
             try {
@@ -24,7 +23,6 @@ export const useTareasStore = defineStore('tareas', {
             }
         },
 
-        // Cargar tareas completadas
         async cargarTareasCompletadas() {
             this.loading = true;
             try {
@@ -37,23 +35,23 @@ export const useTareasStore = defineStore('tareas', {
             }
         },
 
-        // Iniciar la escucha global (solo una vez por sesión)
         iniciarEscucha() {
-            if (this.socketIniciado) {
-                console.log('⚠️ El socket ya está escuchando, evitando duplicados.');
-                return;
-            }
+            if (this.socketIniciado) return;
 
             const socket = getSocket();
             if (socket) {
                 socket.on('actualizar_tareas', () => {
-                    console.log('🔄 Evento recibido: recargando tareas...');
-                    // Recargamos dependiendo de la ruta actual (activas o completadas)
-                    // Por simplicidad, recargamos las activas. Las completadas se recargan al entrar a su vista.
-                    this.cargarTareas();
+                    console.log('🔄 Evento de tiempo real recibido en el Store.');
+                    // Recargamos las tareas. Dependiendo de la vista, esto actualizará los datos.
+                    // Si estamos en completadas, se recargan las completadas.
+                    // Si estamos en activas, se recargan las activas.
+                    if (this.tareas.length > 0 && this.tareas[0].estado === 'completada') {
+                        this.cargarTareasCompletadas();
+                    } else {
+                        this.cargarTareas();
+                    }
                 });
                 this.socketIniciado = true;
-                console.log('✅ Escucha global de tareas iniciada.');
             }
         }
     }
