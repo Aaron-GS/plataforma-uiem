@@ -41,7 +41,7 @@
             </select>
           </div>
 
-          <!-- ✅ Fecha y Hora General Separadas -->
+          <!-- ✅ Fecha y Hora General con nuevo Selector -->
           <div class="field">
             <label>Fecha Límite General</label>
             <div class="date-input-group">
@@ -50,11 +50,12 @@
                 type="date" 
                 class="input-date" 
               />
-              <input 
-                v-model="nuevaTarea.hora_limite" 
-                type="time" 
-                class="input-time" 
-              />
+              <select v-model="nuevaTarea.hora_limite" class="input-time">
+                <option value="" disabled>Hora</option>
+                <option v-for="hora in opcionesHoras" :key="hora.valor" :value="hora.valor">
+                  {{ hora.label }}
+                </option>
+              </select>
             </div>
           </div>
         </div>
@@ -123,11 +124,13 @@
                           type="date" 
                           class="input-date-small" 
                         />
-                        <input 
-                          v-model="areasHoras[area.id]" 
-                          type="time" 
-                          class="input-time-small" 
-                        />
+                        <!-- ✅ Selector de hora por área -->
+                        <select v-model="areasHoras[area.id]" class="input-time-small">
+                          <option value="">Hora</option>
+                          <option v-for="hora in opcionesHoras" :key="hora.valor" :value="hora.valor">
+                            {{ hora.label }}
+                          </option>
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -162,6 +165,21 @@ const areasExpandidas = ref([]);
 const areasUsuarios = ref({});
 const areasFechas = ref({});
 const areasHoras = ref({});
+
+// ✅ GENERADOR DE HORAS (5 en 5 minutos)
+const opcionesHoras = computed(() => {
+  const lista = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 5) {
+      const valor = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      const ampm = h >= 12 ? 'p. m.' : 'a. m.';
+      const hora12 = h % 12 || 12;
+      const label = `${String(hora12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+      lista.push({ valor, label });
+    }
+  }
+  return lista;
+});
 
 const areasAgrupadas = computed(() => {
   const grupos = {};
@@ -333,7 +351,7 @@ h1 { color: #0d3d2a; font-size: 28px; font-weight: 800; display: flex; align-ite
 }
 
 .input-date { flex: 2; }
-.input-time { flex: 1; }
+.input-time { flex: 1; cursor: pointer; }
 
 /* Estilos para inputs de fecha por área */
 .date-input-group-small {
@@ -350,6 +368,9 @@ h1 { color: #0d3d2a; font-size: 28px; font-weight: 800; display: flex; align-ite
   background: white;
   font-family: inherit;
 }
+
+.input-date-small { flex: 1.5; }
+.input-time-small { flex: 1; cursor: pointer; }
 
 .input-date-small:focus, .input-time-small:focus {
   outline: none;
