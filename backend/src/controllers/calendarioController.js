@@ -2,11 +2,12 @@
 const { Tarea, Area, EventoPersonal } = require('../models');
 const { Op } = require('sequelize');
 
+// Obtener todos los eventos (tareas + eventos personales)
 exports.obtenerEventos = async (req, res) => {
     try {
         const usuario = req.usuario;
 
-        // 1. Obtener tareas asignadas a su área (RECTORÍA)
+        // 1. Tareas asignadas a su área
         const tareas = await Tarea.findAll({
             where: {
                 area_destino_id: usuario.area_id,
@@ -15,7 +16,7 @@ exports.obtenerEventos = async (req, res) => {
             include: [{ model: Area, as: 'area_destino', attributes: ['nombre'] }]
         });
 
-        // 2. Obtener sus eventos personales
+        // 2. Eventos personales
         const eventosPersonales = await EventoPersonal.findAll({
             where: { usuario_id: usuario.id }
         });
@@ -50,7 +51,7 @@ exports.obtenerEventos = async (req, res) => {
             extendedProps: { 
                 tipo: 'personal', 
                 eventoId: e.id,
-                descripcion: e.descripcion // ✅ Se envía la descripción al frontend
+                descripcion: e.descripcion
             }
         }));
 
@@ -64,16 +65,30 @@ exports.obtenerEventos = async (req, res) => {
     }
 };
 
+// Crear evento personal
 exports.crearEvento = async (req, res) => {
     try {
         const { titulo, descripcion, fecha_inicio, fecha_fin, todo_el_dia } = req.body;
         
+        console.log('📅 Creando evento:', req.body);
+
+        // ✅ Limpiar formato de fecha para MySQL
+        let fechaInicioLimpia = null;
+        if (fecha_inicio) {
+            fechaInicioLimpia = fecha_inicio.replace('T', ' ').replace('Z', '').split('.')[0];
+        }
+
+        let fechaFinLimpia = null;
+        if (fecha_fin) {
+            fechaFinLimpia = fecha_fin.replace('T', ' ').replace('Z', '').split('.')[0];
+        }
+
         const nuevoEvento = await EventoPersonal.create({
             usuario_id: req.usuario.id,
             titulo,
             descripcion,
-            fecha_inicio,
-            fecha_fin,
+            fecha_inicio: fechaInicioLimpia,
+            fecha_fin: fechaFinLimpia,
             todo_el_dia
         });
 
@@ -84,6 +99,7 @@ exports.crearEvento = async (req, res) => {
     }
 };
 
+// Eliminar evento personal
 exports.eliminarEvento = async (req, res) => {
     try {
         const { id } = req.params;

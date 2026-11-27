@@ -20,7 +20,7 @@
     </div>
 
     <!-- ========================================= -->
-    <!-- MODAL 1: CREAR EVENTO -->
+    <!-- MODAL 1: CREAR EVENTO (MEJORADO) -->
     <!-- ========================================= -->
     <div v-if="mostrarModal" class="modal-overlay" @click.self="mostrarModal = false">
       <div class="modal-content">
@@ -36,14 +36,26 @@
           <textarea v-model="nuevoEvento.descripcion" rows="2" placeholder="Detalles del evento..."></textarea>
         </div>
 
+        <!-- ✅ FECHA Y HORA SEPARADAS -->
         <div class="form-row">
           <div class="field">
-            <label>Inicio *</label>
-            <input v-model="nuevoEvento.fecha_inicio" type="datetime-local" required />
+            <label>Fecha de Inicio *</label>
+            <input v-model="nuevoEvento.fecha_inicio" type="date" required />
           </div>
           <div class="field">
-            <label>Fin</label>
-            <input v-model="nuevoEvento.fecha_fin" type="datetime-local" />
+            <label>Hora de Inicio *</label>
+            <input v-model="nuevoEvento.hora_inicio" type="time" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label>Fecha de Fin</label>
+            <input v-model="nuevoEvento.fecha_fin" type="date" />
+          </div>
+          <div class="field">
+            <label>Hora de Fin</label>
+            <input v-model="nuevoEvento.hora_fin" type="time" />
           </div>
         </div>
 
@@ -98,35 +110,96 @@ import api from '../services/api';
 
 const router = useRouter();
 
-// Estados para los modales y datos
 const mostrarModal = ref(false);
 const mostrarDetalleEvento = ref(false);
 const eventoSeleccionado = ref({});
 
+// ✅ NUEVA ESTRUCTURA PARA FECHA Y HORA SEPARADAS
 const nuevoEvento = ref({
   titulo: '',
   descripcion: '',
   fecha_inicio: '',
+  hora_inicio: '',
   fecha_fin: '',
+  hora_fin: '',
   todo_el_dia: false
 });
 
-// ==========================================
-// FUNCIONES DECLARADAS PRIMERO
-// ==========================================
+// ✅ Función para obtener fecha y hora actual
+const obtenerFechaHoraActual = () => {
+  const ahora = new Date();
+  
+  const año = ahora.getFullYear();
+  const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+  const dia = String(ahora.getDate()).padStart(2, '0');
+  const fechaActual = `${año}-${mes}-${dia}`;
+  
+  const hora = String(ahora.getHours()).padStart(2, '0');
+  const minutos = String(ahora.getMinutes()).padStart(2, '0');
+  const horaActual = `${hora}:${minutos}`;
+  
+  return { fecha: fechaActual, hora: horaActual };
+};
+
+// ✅ Abrir modal con fecha y hora actual precargada
+const abrirModal = () => {
+  const { fecha, hora } = obtenerFechaHoraActual();
+  
+  nuevoEvento.value = {
+    titulo: '',
+    descripcion: '',
+    fecha_inicio: fecha,
+    hora_inicio: hora,
+    fecha_fin: fecha,
+    hora_fin: '',
+    todo_el_dia: false
+  };
+  mostrarModal.value = true;
+};
+
+// ✅ Guardar evento combinando fecha y hora
+const guardarEvento = async () => {
+  if (!nuevoEvento.value.titulo || !nuevoEvento.value.fecha_inicio || !nuevoEvento.value.hora_inicio) {
+    alert('El título, la fecha de inicio y la hora de inicio son obligatorios');
+    return;
+  }
+
+  try {
+    const fechaInicioCompleta = `${nuevoEvento.value.fecha_inicio}T${nuevoEvento.value.hora_inicio}:00`;
+    const fechaFinCompleta = nuevoEvento.value.fecha_fin && nuevoEvento.value.hora_fin 
+      ? `${nuevoEvento.value.fecha_fin}T${nuevoEvento.value.hora_fin}:00` 
+      : null;
+
+    const payload = {
+      titulo: nuevoEvento.value.titulo,
+      descripcion: nuevoEvento.value.descripcion,
+      fecha_inicio: fechaInicioCompleta,
+      fecha_fin: fechaFinCompleta,
+      todo_el_dia: nuevoEvento.value.todo_el_dia
+    };
+
+    await api.post('/calendario/eventos', payload);
+    alert('✅ Evento agendado');
+    mostrarModal.value = false;
+    await cargarEventos();
+  } catch (error) {
+    console.error('Error al guardar evento:', error);
+    alert('❌ Error al guardar el evento');
+  }
+};
+
+// ✅ Manejar clic en evento (tarea o personal)
 const handleEventClick = (info) => {
   const { tipo, tareaId, eventoId, descripcion } = info.event.extendedProps;
   
   if (tipo === 'tarea') {
-    // Si es tarea, pregunta y va al detalle de la tarea
     if (confirm(`¿Ver la tarea: "${info.event.title}"?`)) {
       router.push(`/tareas/${tareaId}`);
     }
   } else {
-    // Si es evento personal, abre el modal con los datos
     eventoSeleccionado.value = {
       id: eventoId,
-      titulo: info.event.title.replace('📅 ', ''), // Quita el emoji
+      titulo: info.event.title.replace('📅 ', ''),
       descripcion: descripcion || '',
       fecha_inicio: info.event.start,
       fecha_fin: info.event.end
@@ -135,6 +208,7 @@ const handleEventClick = (info) => {
   }
 };
 
+// ✅ Cargar eventos
 const cargarEventos = async () => {
   try {
     const response = await api.get('/calendario/eventos');
@@ -145,28 +219,7 @@ const cargarEventos = async () => {
   }
 };
 
-const abrirModal = () => {
-  nuevoEvento.value = { titulo: '', descripcion: '', fecha_inicio: '', fecha_fin: '', todo_el_dia: false };
-  mostrarModal.value = true;
-};
-
-const guardarEvento = async () => {
-  if (!nuevoEvento.value.titulo || !nuevoEvento.value.fecha_inicio) {
-    alert('El título y la fecha de inicio son obligatorios');
-    return;
-  }
-
-  try {
-    await api.post('/calendario/eventos', nuevoEvento.value);
-    alert('✅ Evento agendado');
-    mostrarModal.value = false;
-    await cargarEventos();
-  } catch (error) {
-    console.error('Error al guardar evento:', error);
-    alert('❌ Error al guardar el evento');
-  }
-};
-
+// ✅ Eliminar evento desde el modal
 const eliminarEventoDesdeModal = async () => {
   if (!confirm('¿Estás seguro de que quieres eliminar este evento?')) return;
 
@@ -181,6 +234,7 @@ const eliminarEventoDesdeModal = async () => {
   }
 };
 
+// ✅ Formatear fecha
 const formatDate = (date) => {
   if (!date) return '';
   return new Date(date).toLocaleString('es-MX', {
@@ -189,9 +243,7 @@ const formatDate = (date) => {
   });
 };
 
-// ==========================================
-// CONFIGURACIÓN DEL CALENDARIO
-// ==========================================
+// ✅ Configuración del Calendario
 const calendarOptions = ref({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
   initialView: 'dayGridMonth',
@@ -205,7 +257,7 @@ const calendarOptions = ref({
   events: [],
   editable: false,
   selectable: true,
-  eventClick: handleEventClick, // <-- Ya está declarada arriba, no dará error
+  eventClick: handleEventClick,
   height: 'auto'
 });
 
@@ -276,9 +328,7 @@ onMounted(() => {
   box-shadow: 0 4px 12px rgba(13, 61, 42, 0.3);
 }
 
-/* =========================================
-   ESTILOS DE LOS MODALES
-   ========================================= */
+/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -298,11 +348,13 @@ onMounted(() => {
   border-radius: 12px;
   width: 100%;
   max-width: 500px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
 .modal-content h2 {
   color: #0d3d2a;
   margin-bottom: 16px;
+  font-weight: 800;
 }
 
 .field {
@@ -324,6 +376,7 @@ onMounted(() => {
   border: 2px solid #e0ebe5;
   border-radius: 6px;
   font-family: inherit;
+  font-size: 14px;
 }
 
 .field input:focus,
@@ -377,9 +430,26 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* =========================================
-   ESTILOS DEL DETALLE DEL EVENTO
-   ========================================= */
+.btn-save:hover {
+  background: #0d3d2a;
+}
+
+.btn-danger {
+  padding: 10px 20px;
+  background: #ffebee;
+  color: #b71c1c;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-danger:hover {
+  background: #f44336;
+  color: white;
+}
+
+/* Detalle del evento */
 .evento-detalle {
   background: #f5faf7;
   padding: 16px;
@@ -406,24 +476,7 @@ onMounted(() => {
   font-size: 14px;
 }
 
-.btn-danger {
-  padding: 10px 20px;
-  background: #ffebee;
-  color: #b71c1c;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn-danger:hover {
-  background: #f44336;
-  color: white;
-}
-
-/* =========================================
-   ESTILOS PERSONALIZADOS PARA FULLCALENDAR
-   ========================================= */
+/* Personalización de FullCalendar */
 :deep(.fc) {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
