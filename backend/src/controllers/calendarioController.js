@@ -99,7 +99,7 @@ exports.crearEvento = async (req, res) => {
     }
 };
 
-// Actualizar evento personal (NUEVO)
+// Actualizar evento personal
 exports.actualizarEvento = async (req, res) => {
     try {
         const { id } = req.params;

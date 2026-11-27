@@ -43,7 +43,13 @@
           </div>
           <div class="field">
             <label>Hora de Inicio *</label>
-            <input v-model="nuevoEvento.hora_inicio" type="time" required />
+            <!-- SELECTOR PERSONALIZADO DE HORA -->
+            <select v-model="nuevoEvento.hora_inicio" class="time-select" required>
+              <option value="" disabled>Selecciona hora</option>
+              <option v-for="hora in opcionesHoras" :key="hora.valor" :value="hora.valor">
+                {{ hora.label }}
+              </option>
+            </select>
           </div>
         </div>
 
@@ -54,7 +60,13 @@
           </div>
           <div class="field">
             <label>Hora de Fin</label>
-            <input v-model="nuevoEvento.hora_fin" type="time" />
+            <!-- SELECTOR PERSONALIZADO DE HORA -->
+            <select v-model="nuevoEvento.hora_fin" class="time-select">
+              <option value="">Sin hora fin</option>
+              <option v-for="hora in opcionesHoras" :key="hora.valor" :value="hora.valor">
+                {{ hora.label }}
+              </option>
+            </select>
           </div>
         </div>
 
@@ -103,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -116,8 +128,8 @@ const router = useRouter();
 const mostrarModal = ref(false);
 const mostrarDetalleEvento = ref(false);
 const eventoSeleccionado = ref({});
-const modoEdicion = ref(false); // ✅ Nueva variable
-const eventoEditandoId = ref(null); // ✅ Nueva variable
+const modoEdicion = ref(false);
+const eventoEditandoId = ref(null);
 
 // Estructura para crear/editar
 const nuevoEvento = ref({
@@ -130,7 +142,26 @@ const nuevoEvento = ref({
   todo_el_dia: false
 });
 
-// Función para obtener fecha y hora actual
+// ✅ GENERADOR DE HORAS (5 en 5 minutos)
+const opcionesHoras = computed(() => {
+  const lista = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 5) {
+      // Valor real para enviar al backend (24h) -> "14:05"
+      const valor = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      
+      // Formato para mostrar (12h) -> "02:05 p. m."
+      const ampm = h >= 12 ? 'p. m.' : 'a. m.';
+      const hora12 = h % 12 || 12;
+      const label = `${String(hora12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+      
+      lista.push({ valor, label });
+    }
+  }
+  return lista;
+});
+
+// Función para obtener fecha y hora actual (redondeada a 5 min)
 const obtenerFechaHoraActual = () => {
   const ahora = new Date();
   
@@ -139,9 +170,17 @@ const obtenerFechaHoraActual = () => {
   const dia = String(ahora.getDate()).padStart(2, '0');
   const fechaActual = `${año}-${mes}-${dia}`;
   
-  const hora = String(ahora.getHours()).padStart(2, '0');
-  const minutos = String(ahora.getMinutes()).padStart(2, '0');
-  const horaActual = `${hora}:${minutos}`;
+  // Redondear minutos al múltiplo de 5 más cercano
+  let hora = ahora.getHours();
+  let minutos = Math.round(ahora.getMinutes() / 5) * 5;
+  
+  // Si redondea a 60, pasa a la siguiente hora
+  if (minutos === 60) {
+    hora += 1;
+    minutos = 0;
+  }
+  
+  const horaActual = `${String(hora).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
   
   return { fecha: fechaActual, hora: horaActual };
 };
@@ -423,18 +462,27 @@ onMounted(() => {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   padding: 10px;
   border: 2px solid #e0ebe5;
   border-radius: 6px;
   font-family: inherit;
   font-size: 14px;
+  background-color: white;
 }
 
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   outline: none;
   border-color: #1a5c40;
+}
+
+/* Estilo específico para el selector de tiempo */
+.time-select {
+  cursor: pointer;
+  color: #333;
 }
 
 .form-row {
