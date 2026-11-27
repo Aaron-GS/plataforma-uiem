@@ -72,7 +72,7 @@ exports.crearEvento = async (req, res) => {
         
         console.log('📅 Creando evento:', req.body);
 
-        // ✅ Limpiar formato de fecha para MySQL
+        // Limpiar formato de fecha para MySQL
         let fechaInicioLimpia = null;
         if (fecha_inicio) {
             fechaInicioLimpia = fecha_inicio.replace('T', ' ').replace('Z', '').split('.')[0];
@@ -96,6 +96,46 @@ exports.crearEvento = async (req, res) => {
     } catch (error) {
         console.error('Error al crear evento:', error);
         res.status(500).json({ success: false, message: 'Error al crear evento', error: error.message });
+    }
+};
+
+// Actualizar evento personal (NUEVO)
+exports.actualizarEvento = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { titulo, descripcion, fecha_inicio, fecha_fin, todo_el_dia } = req.body;
+        
+        const evento = await EventoPersonal.findOne({ 
+            where: { id, usuario_id: req.usuario.id } 
+        });
+        
+        if (!evento) {
+            return res.status(404).json({ success: false, message: 'Evento no encontrado' });
+        }
+
+        // Limpiar formato de fecha para MySQL
+        let fechaInicioLimpia = null;
+        if (fecha_inicio) {
+            fechaInicioLimpia = fecha_inicio.replace('T', ' ').replace('Z', '').split('.')[0];
+        }
+
+        let fechaFinLimpia = null;
+        if (fecha_fin) {
+            fechaFinLimpia = fecha_fin.replace('T', ' ').replace('Z', '').split('.')[0];
+        }
+
+        await evento.update({
+            titulo,
+            descripcion,
+            fecha_inicio: fechaInicioLimpia,
+            fecha_fin: fechaFinLimpia,
+            todo_el_dia
+        });
+
+        res.json({ success: true, data: evento, message: 'Evento actualizado' });
+    } catch (error) {
+        console.error('Error al actualizar evento:', error);
+        res.status(500).json({ success: false, message: 'Error al actualizar evento', error: error.message });
     }
 };
 

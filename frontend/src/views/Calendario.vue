@@ -20,11 +20,11 @@
     </div>
 
     <!-- ========================================= -->
-    <!-- MODAL 1: CREAR EVENTO (MEJORADO) -->
+    <!-- MODAL 1: CREAR / EDITAR EVENTO -->
     <!-- ========================================= -->
     <div v-if="mostrarModal" class="modal-overlay" @click.self="mostrarModal = false">
       <div class="modal-content">
-        <h2>Agendar Nuevo Evento</h2>
+        <h2>{{ modoEdicion ? 'Editar Evento' : 'Agendar Nuevo Evento' }}</h2>
         
         <div class="field">
           <label>Título del Evento *</label>
@@ -36,7 +36,6 @@
           <textarea v-model="nuevoEvento.descripcion" rows="2" placeholder="Detalles del evento..."></textarea>
         </div>
 
-        <!-- ✅ FECHA Y HORA SEPARADAS -->
         <div class="form-row">
           <div class="field">
             <label>Fecha de Inicio *</label>
@@ -68,7 +67,9 @@
 
         <div class="modal-actions">
           <button @click="mostrarModal = false" class="btn-cancel">Cancelar</button>
-          <button @click="guardarEvento" class="btn-save">Guardar Evento</button>
+          <button @click="guardarEvento" class="btn-save">
+            {{ modoEdicion ? 'Guardar Cambios' : 'Guardar Evento' }}
+          </button>
         </div>
       </div>
     </div>
@@ -92,6 +93,8 @@
 
         <div class="modal-actions">
           <button @click="mostrarDetalleEvento = false" class="btn-cancel">Cerrar</button>
+          <!-- ✅ BOTÓN DE EDITAR -->
+          <button @click="prepararEdicion" class="btn-save" style="background: #ff9800;">✏️ Editar</button>
           <button @click="eliminarEventoDesdeModal" class="btn-danger">Eliminar Evento</button>
         </div>
       </div>
@@ -113,8 +116,10 @@ const router = useRouter();
 const mostrarModal = ref(false);
 const mostrarDetalleEvento = ref(false);
 const eventoSeleccionado = ref({});
+const modoEdicion = ref(false); // ✅ Nueva variable
+const eventoEditandoId = ref(null); // ✅ Nueva variable
 
-// ✅ NUEVA ESTRUCTURA PARA FECHA Y HORA SEPARADAS
+// Estructura para crear/editar
 const nuevoEvento = ref({
   titulo: '',
   descripcion: '',
@@ -125,7 +130,7 @@ const nuevoEvento = ref({
   todo_el_dia: false
 });
 
-// ✅ Función para obtener fecha y hora actual
+// Función para obtener fecha y hora actual
 const obtenerFechaHoraActual = () => {
   const ahora = new Date();
   
@@ -141,7 +146,7 @@ const obtenerFechaHoraActual = () => {
   return { fecha: fechaActual, hora: horaActual };
 };
 
-// ✅ Abrir modal con fecha y hora actual precargada
+// Abrir modal para crear
 const abrirModal = () => {
   const { fecha, hora } = obtenerFechaHoraActual();
   
@@ -154,10 +159,48 @@ const abrirModal = () => {
     hora_fin: '',
     todo_el_dia: false
   };
+  modoEdicion.value = false;
+  eventoEditandoId.value = null;
   mostrarModal.value = true;
 };
 
-// ✅ Guardar evento combinando fecha y hora
+// Preparar edición desde el modal de detalles
+const prepararEdicion = () => {
+  const evento = eventoSeleccionado.value;
+  
+  let fechaInicioStr = '';
+  let horaInicioStr = '';
+  if (evento.fecha_inicio) {
+    const d = new Date(evento.fecha_inicio);
+    fechaInicioStr = d.toISOString().split('T')[0];
+    horaInicioStr = d.toTimeString().slice(0, 5);
+  }
+
+  let fechaFinStr = '';
+  let horaFinStr = '';
+  if (evento.fecha_fin) {
+    const d = new Date(evento.fecha_fin);
+    fechaFinStr = d.toISOString().split('T')[0];
+    horaFinStr = d.toTimeString().slice(0, 5);
+  }
+
+  nuevoEvento.value = {
+    titulo: evento.titulo,
+    descripcion: evento.descripcion || '',
+    fecha_inicio: fechaInicioStr,
+    hora_inicio: horaInicioStr,
+    fecha_fin: fechaFinStr,
+    hora_fin: horaFinStr,
+    todo_el_dia: false
+  };
+  
+  modoEdicion.value = true;
+  eventoEditandoId.value = evento.id;
+  mostrarDetalleEvento.value = false;
+  mostrarModal.value = true;
+};
+
+// Guardar evento (crear o editar)
 const guardarEvento = async () => {
   if (!nuevoEvento.value.titulo || !nuevoEvento.value.fecha_inicio || !nuevoEvento.value.hora_inicio) {
     alert('El título, la fecha de inicio y la hora de inicio son obligatorios');
@@ -178,17 +221,26 @@ const guardarEvento = async () => {
       todo_el_dia: nuevoEvento.value.todo_el_dia
     };
 
-    await api.post('/calendario/eventos', payload);
-    alert('✅ Evento agendado');
+    if (modoEdicion.value && eventoEditandoId.value) {
+      await api.put(`/calendario/eventos/${eventoEditandoId.value}`, payload);
+      alert('✅ Evento actualizado correctamente');
+    } else {
+      await api.post('/calendario/eventos', payload);
+      alert('✅ Evento agendado correctamente');
+    }
+
     mostrarModal.value = false;
     await cargarEventos();
+    
+    modoEdicion.value = false;
+    eventoEditandoId.value = null;
   } catch (error) {
     console.error('Error al guardar evento:', error);
     alert('❌ Error al guardar el evento');
   }
 };
 
-// ✅ Manejar clic en evento (tarea o personal)
+// Manejar clic en evento
 const handleEventClick = (info) => {
   const { tipo, tareaId, eventoId, descripcion } = info.event.extendedProps;
   
@@ -208,7 +260,7 @@ const handleEventClick = (info) => {
   }
 };
 
-// ✅ Cargar eventos
+// Cargar eventos
 const cargarEventos = async () => {
   try {
     const response = await api.get('/calendario/eventos');
@@ -219,7 +271,7 @@ const cargarEventos = async () => {
   }
 };
 
-// ✅ Eliminar evento desde el modal
+// Eliminar evento
 const eliminarEventoDesdeModal = async () => {
   if (!confirm('¿Estás seguro de que quieres eliminar este evento?')) return;
 
@@ -234,7 +286,7 @@ const eliminarEventoDesdeModal = async () => {
   }
 };
 
-// ✅ Formatear fecha
+// Formatear fecha
 const formatDate = (date) => {
   if (!date) return '';
   return new Date(date).toLocaleString('es-MX', {
@@ -243,7 +295,7 @@ const formatDate = (date) => {
   });
 };
 
-// ✅ Configuración del Calendario
+// Configuración del Calendario
 const calendarOptions = ref({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
   initialView: 'dayGridMonth',
