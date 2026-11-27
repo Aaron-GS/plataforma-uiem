@@ -77,9 +77,10 @@ const notificarSuperAdmins = (evento, data) => {
     io.to('superadmin_room').emit(evento, data);
 };
 
+// ✅ IMPORTANTE: Exportamos `io` como getter para que siempre devuelva la instancia activa
 module.exports = {
     initSocket,
-    io,
+    get io() { return io; },
     enviarNotificacion,
     notificarSuperAdmins
 };

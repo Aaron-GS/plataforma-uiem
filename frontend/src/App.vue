@@ -117,7 +117,10 @@ watch(() => route.path, () => {
 
 onMounted(() => {
   if (authStore.isAuthenticated) {
-    notificacionesStore.iniciarEscucha();
+    // Cargar historial de la BD y luego escuchar en tiempo real
+    notificacionesStore.cargarNotificaciones();
+    tareasStore.iniciarEscucha();
+
     tareasStore.iniciarEscucha();
   }
 });

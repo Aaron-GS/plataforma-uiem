@@ -1,6 +1,7 @@
 // frontend/src/store/notificaciones.js
 import { defineStore } from 'pinia';
 import { getSocket } from '../services/socket';
+import api from '../services/api'; // Asegúrate de tener tu axios importado
 
 export const useNotificacionesStore = defineStore('notificaciones', {
     state: () => ({
@@ -13,10 +14,22 @@ export const useNotificacionesStore = defineStore('notificaciones', {
     },
 
     actions: {
+        // ✅ Nueva acción para cargar el historial al entrar
+        async cargarNotificaciones() {
+            try {
+                const res = await api.get('/notificaciones');
+                this.notificaciones = res.data.data;
+                this.noLeidas = this.notificaciones.filter(n => !n.leida).length;
+            } catch (error) {
+                console.error('Error al cargar notificaciones', error);
+            }
+        },
+
         agregarNotificacion(notificacion) {
             this.notificaciones.unshift({
                 ...notificacion,
-                id: Date.now(),
+                // Si el backend no envía ID (por ser socket), generamos uno temporal
+                id: notificacion.id || Date.now(),
                 leida: false
             });
             this.noLeidas++;
@@ -38,7 +51,9 @@ export const useNotificacionesStore = defineStore('notificaciones', {
         iniciarEscucha() {
             const socket = getSocket();
             if (socket) {
+                socket.off('nueva_notificacion'); // Evitar listeners duplicados
                 socket.on('nueva_notificacion', (notificacion) => {
+                    console.log('🔔 Notificación recibida:', notificacion);
                     this.agregarNotificacion(notificacion);
                 });
             }
@@ -47,6 +62,8 @@ export const useNotificacionesStore = defineStore('notificaciones', {
         limpiar() {
             this.notificaciones = [];
             this.noLeidas = 0;
+            const socket = getSocket();
+            if (socket) socket.off('nueva_notificacion');
         }
     }
 });

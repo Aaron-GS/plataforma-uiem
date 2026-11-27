@@ -1,14 +1,14 @@
 // backend/src/controllers/tareaController.js
 const { Tarea, Usuario, Area, TareaArea, HistorialTarea, Notificacion } = require('../models');
 const { Op } = require('sequelize');
-const socketModule = require('../config/socket'); // ✅ Importamos el módulo completo
+const socketModule = require('../config/socket');
 
 // =============================================
 // FUNCIÓN AUXILIAR PARA EMITIR EVENTO EN TIEMPO REAL
 // =============================================
 const notificarCambioTareas = () => {
     if (socketModule.io) {
-        socketModule.io.emit('actualizar_tareas'); // ✅ Usamos socketModule.io
+        socketModule.io.emit('actualizar_tareas'); 
         console.log('📡 Evento "actualizar_tareas" emitido a todos los clientes');
     } else {
         console.log('⚠️ io no está inicializado aún');
@@ -119,7 +119,6 @@ exports.crearTarea = async (req, res) => {
             ]
         });
 
-        // ✅ EMITIR EVENTO EN TIEMPO REAL
         notificarCambioTareas();
 
         res.status(201).json({
@@ -305,7 +304,7 @@ exports.actualizarTarea = async (req, res) => {
                 if (!idsActuales.includes(parseInt(nuevaArea.area_id))) {
                     await TareaArea.create({
                         tarea_id: id,
-                        area_id: parseInt(nueva_area_id),
+                        area_id: parseInt(nuevaArea.area_id), // ✅ CORREGIDO AQUÍ
                         asignada_a: nuevaArea.asignada_a ? parseInt(nuevaArea.asignada_a) : null,
                         estado: 'pendiente',
                         fecha_limite: tarea.fecha_limite
@@ -322,7 +321,6 @@ exports.actualizarTarea = async (req, res) => {
             datos_previos: datosPrevios
         });
 
-        // ✅ EMITIR EVENTO EN TIEMPO REAL
         notificarCambioTareas();
 
         res.json({ success: true, data: tarea, message: 'Tarea actualizada correctamente' });
@@ -349,7 +347,6 @@ exports.eliminarTarea = async (req, res) => {
 
         await tarea.destroy();
 
-        // ✅ EMITIR EVENTO EN TIEMPO REAL
         notificarCambioTareas();
 
         res.json({ success: true, message: 'Tarea eliminada correctamente' });
@@ -378,7 +375,6 @@ exports.reasignarTarea = async (req, res) => {
 
         await tarea.save();
         
-        // ✅ EMITIR EVENTO
         notificarCambioTareas();
 
         res.json({ success: true, data: tarea, message: 'Tarea reasignada' });
@@ -410,12 +406,27 @@ exports.actualizarEstadoArea = async (req, res) => {
         if (estado) tareaArea.estado = estado;
         await tareaArea.save();
 
+        // ✅ NOTIFICAR AL ADMIN CUANDO SE SUBE UN AVANCE
+        const tareaGeneral = await Tarea.findByPk(tareaId);
+        
+        if (estado === 'por_validar' || estado === 'completada') {
+            const mensajeAdmin = `👤 ${req.usuario.nombre} subió un avance en la tarea: "${tareaGeneral.titulo}"`;
+            
+            await Notificacion.create({
+                usuario_id: tareaGeneral.creada_por,
+                tarea_id: tareaGeneral.id,
+                tipo: 'avance',
+                mensaje: mensajeAdmin
+            });
+
+            socketModule.enviarNotificacion(tareaGeneral.creada_por, 'avance', mensajeAdmin, tareaGeneral.id);
+        }
+
         const todasLasAreas = await TareaArea.findAll({ where: { tarea_id: tareaId } });
         const totalAreas = todasLasAreas.length;
         const areasCompletadas = todasLasAreas.filter(a => a.estado === 'completada').length;
 
         if (totalAreas > 0 && areasCompletadas === totalAreas) {
-            const tareaGeneral = await Tarea.findByPk(tareaId);
             if (tareaGeneral && tareaGeneral.estado !== 'completada') {
                 tareaGeneral.estado = 'completada';
                 tareaGeneral.fecha_completada = new Date();
@@ -429,7 +440,6 @@ exports.actualizarEstadoArea = async (req, res) => {
                 });
             }
         } else {
-            const tareaGeneral = await Tarea.findByPk(tareaId);
             if (tareaGeneral && tareaGeneral.estado === 'completada') {
                 tareaGeneral.estado = 'en_proceso';
                 tareaGeneral.fecha_completada = null;
@@ -437,7 +447,6 @@ exports.actualizarEstadoArea = async (req, res) => {
             }
         }
 
-        // ✅ EMITIR EVENTO
         notificarCambioTareas();
 
         res.json({ success: true, data: tareaArea });
